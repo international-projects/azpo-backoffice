@@ -11,7 +11,7 @@ export const CONFIG = {
       ? process.env.NEXT_PUBLIC_SERVER_URL.startsWith('http')
         ? process.env.NEXT_PUBLIC_SERVER_URL
         : `http://${process.env.NEXT_PUBLIC_SERVER_URL}`
-      : 'http://localhost:3004',
+      : 'http://49.13.105.38:8080',
     assetURL: process.env.NEXT_PUBLIC_ASSET_URL ?? '',
     basePath: process.env.NEXT_PUBLIC_BASE_PATH ?? '',
     version: packageJson.version,

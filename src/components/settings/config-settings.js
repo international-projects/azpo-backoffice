@@ -6,10 +6,10 @@ export const STORAGE_KEY = 'app-settings';
 
 export const defaultSettings = {
   colorScheme: 'light',
-  direction: 'rtl',
+  direction: 'ltr',
   contrast: 'default',
   navLayout: 'vertical',
-  primaryColor: 'red',
+  primaryColor: 'blue',
   navColor: 'integrate',
   compactLayout: true,
   fontFamily: defaultFont,

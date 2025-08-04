@@ -18,7 +18,7 @@ export function Section({
   methods,
   title = 'Manage the job',
   imgUrl = `${CONFIG.site.basePath}/assets/illustrations/illustration-dashboard.webp`,
-  subtitle = 'عملکرد مؤثرتر با بهره‌گیری از گردش‌کارهای بهینه‌شده.',
+  subtitle = 'Efficient performance with optimized workflows.',
   ...other
 }) {
   const theme = useTheme();

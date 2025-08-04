@@ -34,14 +34,11 @@ import { signInWithPassword } from 'src/auth/context/jwt';
  * شِمای اعتبارسنجی ورود با استفاده از Zod
  */
 export const SignInSchema = zod.object({
-  email: zod
-    .string()
-    .min(1, { message: 'ایمیل الزامی است!' })
-    .email({ message: 'ایمیل باید یک آدرس معتبر باشد!' }),
+  username: zod.string().min(1, { message: 'Username is required' }),
   password: zod
     .string()
-    .min(1, { message: 'رمز عبور الزامی است!' })
-    .min(6, { message: 'رمز عبور باید حداقل ۶ کاراکتر باشد!' }),
+    .min(1, { message: 'Password is required' })
+    .min(6, { message: 'Password must be at least 6 characters' }),
 });
 
 // ----------------------------------------------------------------------
@@ -58,7 +55,7 @@ export function JwtSignInView() {
   const password = useBoolean();
 
   const defaultValues = {
-    email: '',
+    username: '',
     password: '',
   };
 
@@ -75,7 +72,7 @@ export function JwtSignInView() {
   const onSubmit = handleSubmit(async (data) => {
     console.log('Submitting login data:', data);
     try {
-      await signInWithPassword({ email: data.email, password: data.password });
+      await signInWithPassword({ username: data.username, password: data.password });
       await checkUserSession?.();
       router.refresh();
     } catch (error) {
@@ -87,15 +84,15 @@ export function JwtSignInView() {
   // قسمت بالای فرم (تیتر و لینک ثبت‌نام)
   const renderHead = (
     <Stack spacing={1.5} sx={{ mb: 5 }}>
-      <Typography variant="h5">ورود به حساب کاربری</Typography>
+      <Typography variant="h5">Login to your account</Typography>
 
       <Stack direction="row" spacing={0.5}>
         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          حساب کاربری ندارید؟
+          Don't have an account?
         </Typography>
 
         <Link component={RouterLink} href={paths.auth.jwt.signUp} variant="subtitle2">
-          ثبت‌نام کنید
+          Sign up
         </Link>
       </Stack>
     </Stack>
@@ -104,7 +101,7 @@ export function JwtSignInView() {
   // فرم ورود
   const renderForm = (
     <Stack spacing={3}>
-      <Field.Text name="email" label="ایمیل" InputLabelProps={{ shrink: true }} />
+      <Field.Text name="username" label="username" InputLabelProps={{ shrink: true }} />
 
       <Stack spacing={1.5}>
         <Link
@@ -114,13 +111,13 @@ export function JwtSignInView() {
           color="inherit"
           sx={{ alignSelf: 'flex-end' }}
         >
-          رمز عبور را فراموش کرده‌اید؟
+          Forgot your password?
         </Link>
 
         <Field.Text
           name="password"
-          label="رمز عبور"
-          placeholder="حداقل ۶ کاراکتر"
+          label="Password"
+          placeholder="At least 6 characters"
           type={password.value ? 'text' : 'password'}
           InputLabelProps={{ shrink: true }}
           InputProps={{
@@ -142,9 +139,9 @@ export function JwtSignInView() {
         type="submit"
         variant="contained"
         loading={isSubmitting}
-        loadingIndicator="در حال ورود..."
+        loadingIndicator="Logging in..."
       >
-        ورود
+        Login
       </LoadingButton>
     </Stack>
   );

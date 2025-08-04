@@ -29,7 +29,7 @@ export const Logo = forwardRef(
      * const logo = ( <Box alt="logo" component="img" src={`${CONFIG.site.basePath}/logo/logo-single.svg`} width={width} height={height} /> );
      */
 
-    const logo = <Image src="/logo/logo-single.svg" width={width} height={height} />;
+    const logo = <Image src="/logo/logo-single.avif" width={width} height={height} />;
 
     return (
       <NoSsr

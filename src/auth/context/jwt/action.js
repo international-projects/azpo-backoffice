@@ -8,9 +8,9 @@ import { STORAGE_KEY } from './constant';
 /** **************************************
  * Sign in
  *************************************** */
-export const signInWithPassword = async ({ email, password }) => {
+export const signInWithPassword = async ({ username, password }) => {
   try {
-    const params = { email, password };
+    const params = { username, password };
 
     const res = await axios.post(endpoints.auth.signIn, params);
 
@@ -34,7 +34,7 @@ export const signInWithPassword = async ({ email, password }) => {
     return { access_token, user };
   } catch (error) {
     console.error('Error during sign in:', error);
-    throw error;
+    throw error.message;
   }
 };
 

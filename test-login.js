@@ -3,7 +3,7 @@
 
 const axios = require('axios');
 
-const BASE_URL = 'http://localhost:3004';
+const BASE_URL = 'http://49.13.105.38:8080';
 
 // Test user data
 const testUser = {
