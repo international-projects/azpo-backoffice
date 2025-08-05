@@ -49,10 +49,12 @@ export const endpoints = {
   auth: {
     me: '/auth/test',
     signIn: '/dashboard/admin-login',
+    userInfo: '/dashboard/user-info',
     signUp: '/user/createUser',
   },
 
   user: {
+    info: '/dashboard/user-info',
     list: '/user/users',
     details: '/user/getUserById',
     create: '/user/createUser',

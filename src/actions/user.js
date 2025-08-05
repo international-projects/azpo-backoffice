@@ -2,6 +2,12 @@ import { useFetchAPI } from 'src/hooks/use-fetch-api';
 
 import axios, { endpoints } from 'src/utils/axios';
 
+// user-info
+export const getUserInfo = async () => {
+  const response = await axios.get(endpoints.user.info);
+  return response.data;
+};
+
 // ----------------------------------------------------------------------
 
 export const useGetUsers = (options = {}) => {
@@ -95,3 +101,4 @@ export const getUserById = async (userId) => {
     throw error;
   }
 };
+//

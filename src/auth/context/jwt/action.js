@@ -1,6 +1,6 @@
 'use client';
 
-import axios, { endpoints } from 'src/utils/axios';
+import axiosInstance, { endpoints } from 'src/utils/axios';
 
 import { setSession } from './utils';
 import { STORAGE_KEY } from './constant';
@@ -8,30 +8,39 @@ import { STORAGE_KEY } from './constant';
 /** **************************************
  * Sign in
  *************************************** */
-export const signInWithPassword = async ({ username, password }) => {
+export const signInWithPassword = async ({ username, password }, router) => {
   try {
     const params = { username, password };
 
-    const res = await axios.post(endpoints.auth.signIn, params);
+    const res = await axiosInstance.post(endpoints.auth.signIn, params);
+    // const userInfoLogin = await axios.post(endpoints.auth.userInfo, params);
+    const { token } = res.data;
 
-    const { access_token, user } = res.data;
-
-    if (!access_token) {
+    if (!token) {
       throw new Error('Access token not found in response');
     }
 
     // Store the token in session storage
-    sessionStorage.setItem(STORAGE_KEY, access_token);
+    await sessionStorage.setItem(STORAGE_KEY, token);
 
     // Set the session for axios
-    setSession(access_token);
+    await setSession(token);
 
+    const userInfo = await axiosInstance.get(endpoints.user.info);
     // Store user data in session storage for persistence
-    if (user) {
-      sessionStorage.setItem('user_data', JSON.stringify(user));
+    if (userInfo) {
+      sessionStorage.setItem('user_data', JSON.stringify(userInfo.data));
+    }
+    if (userInfo.status === 200) {
+      console.log('userInfo', userInfo.data.username);
+      if (userInfo.data.username === 'entryteam' || userInfo.data.username === 'fulladmin') {
+        return router.push('/dashboard');
+      }
+      if (userInfo.data.username === 'formadmin') return router.push('/plp-docs');
+      return router.push('/admin');
     }
 
-    return { access_token, user };
+    return { token, userInfo };
   } catch (error) {
     console.error('Error during sign in:', error);
     throw error.message;
@@ -50,7 +59,7 @@ export const signUp = async ({ email, password, firstName, lastName }) => {
   };
 
   try {
-    const res = await axios.post(endpoints.auth.signUp, params);
+    const res = await axiosInstance.post(endpoints.auth.signUp, params);
 
     const { access_token } = res.data;
 

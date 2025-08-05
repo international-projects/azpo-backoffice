@@ -6,9 +6,9 @@ import { useSetState } from 'src/hooks/use-set-state';
 
 import axios, { endpoints } from 'src/utils/axios';
 
+import { setSession } from './utils';
 import { STORAGE_KEY } from './constant';
 import { AuthContext } from '../auth-context';
-import { setSession, isValidToken } from './utils';
 
 // ----------------------------------------------------------------------
 
@@ -23,18 +23,18 @@ export function AuthProvider({ children }) {
       const accessToken = sessionStorage.getItem(STORAGE_KEY);
       const storedUserData = sessionStorage.getItem('user_data');
 
-      if (accessToken && isValidToken(accessToken)) {
+      if (accessToken) {
         setSession(accessToken);
 
         // Try to get user data from the test endpoint
         try {
           const res = await axios.get(endpoints.auth.me);
           console.log('Auth test response:', res.data);
-          
+
           // If we get a successful response, create a user object
           const user = {
-            id: 'user-id', // You might want to decode the JWT to get user info
-            email: 'user@example.com', // This should come from the backend
+            id: 'user-id',
+            email: 'user@example.com',
             role: 'admin',
             accessToken,
           };
@@ -42,7 +42,7 @@ export function AuthProvider({ children }) {
           setState({ user, loading: false });
         } catch (authError) {
           console.log('Auth test failed, but token is valid:', authError);
-          
+
           // Use stored user data if available, otherwise create default user object
           let user;
           if (storedUserData) {
@@ -70,7 +70,7 @@ export function AuthProvider({ children }) {
               accessToken,
             };
           }
-          
+
           setState({ user, loading: false });
         }
       } else {

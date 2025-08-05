@@ -73,19 +73,21 @@ export async function setSession(accessToken) {
   try {
     if (accessToken) {
       sessionStorage.setItem(STORAGE_KEY, accessToken);
+      // action.js:57 Refused to set unsafe header "cookie"
 
       axios.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
+      console.log('accessToken', accessToken);
 
-      const decodedToken = jwtDecode(accessToken); // ~3 days by minimals server
+      // const decodedToken = jwtDecode(accessToken); // ~3 days by minimals server
 
-      if (decodedToken && 'exp' in decodedToken) {
-        tokenExpired(decodedToken.exp);
-      } else {
-        throw new Error('Invalid access token!');
-      }
+      // if (decodedToken && 'exp' in decodedToken) {
+      //   tokenExpired(decodedToken.exp);
+      // } else {
+      //   throw new Error('Invalid access token!');
+      // }
     } else {
       sessionStorage.removeItem(STORAGE_KEY);
-      delete axios.defaults.headers.common.Authorization;
+      delete axios.defaults.headers.common.cookie;
     }
   } catch (error) {
     console.error('Error during set session:', error);
