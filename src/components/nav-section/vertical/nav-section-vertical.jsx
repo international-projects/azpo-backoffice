@@ -1,7 +1,4 @@
-import { useState, useCallback } from 'react';
-
 import Stack from '@mui/material/Stack';
-import Collapse from '@mui/material/Collapse';
 import { useTheme } from '@mui/material/styles';
 
 import { NavList } from './nav-list';
@@ -18,6 +15,7 @@ export function NavSectionVertical({
   slotProps,
   enabledRootRedirect,
   cssVars: overridesVars,
+  currentRole,
 }) {
   const theme = useTheme();
 
@@ -37,6 +35,7 @@ export function NavSectionVertical({
             render={render}
             slotProps={slotProps}
             enabledRootRedirect={enabledRootRedirect}
+            currentRole={currentRole}
           />
         ))}
       </NavUl>
@@ -46,46 +45,51 @@ export function NavSectionVertical({
 
 // ----------------------------------------------------------------------
 
-function Group({ items, render, subheader, slotProps, enabledRootRedirect }) {
-  const [open, setOpen] = useState(true);
+function Group({ subheader, items, render, slotProps, enabledRootRedirect, currentRole }) {
+  const theme = useTheme();
 
-  const handleToggle = useCallback(() => {
-    setOpen((prev) => !prev);
-  }, []);
+  const filteredItems = items.filter((item) => {
+    // If no roles are specified, show the item
+    if (!item.roles) {
+      return true;
+    }
+    // If roles are specified, check if current role is included
+    return item.roles.includes(currentRole);
+  });
 
-  const renderContent = (
-    <NavUl sx={{ gap: 'var(--nav-item-gap)' }}>
-      {items.map((list) => (
-        <NavList
-          key={list.title}
-          data={list}
-          render={render}
-          depth={1}
-          slotProps={slotProps}
-          enabledRootRedirect={enabledRootRedirect}
-        />
-      ))}
-    </NavUl>
-  );
+  // Don't render the group if no items are visible
+  if (filteredItems.length === 0) {
+    return null;
+  }
 
   return (
     <NavLi>
-      {subheader ? (
-        <>
-          <Subheader
-            data-title={subheader}
-            open={open}
-            onClick={handleToggle}
-            sx={slotProps?.subheader}
-          >
-            {subheader}
-          </Subheader>
-
-          <Collapse in={open}>{renderContent}</Collapse>
-        </>
-      ) : (
-        renderContent
+      {subheader && (
+        <Subheader
+          disableSticky
+          sx={{
+            ...(theme.direction === 'rtl' && {
+              '& .MuiTypography-root': { typography: 'caption' },
+            }),
+          }}
+        >
+          {subheader}
+        </Subheader>
       )}
+
+      <NavUl sx={{ gap: 'var(--nav-item-gap)' }}>
+        {filteredItems.map((list) => (
+          <NavList
+            key={list.title}
+            data={list}
+            render={render}
+            depth={1}
+            slotProps={slotProps}
+            enabledRootRedirect={enabledRootRedirect}
+            currentRole={currentRole}
+          />
+        ))}
+      </NavUl>
     </NavLi>
   );
 }

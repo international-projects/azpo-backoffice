@@ -15,6 +15,7 @@ export function NavSectionMini({
   slotProps,
   enabledRootRedirect,
   cssVars: overridesVars,
+  currentRole,
 }) {
   const theme = useTheme();
 
@@ -34,6 +35,7 @@ export function NavSectionMini({
             items={group.items}
             slotProps={slotProps}
             enabledRootRedirect={enabledRootRedirect}
+            currentRole={currentRole}
           />
         ))}
       </NavUl>
@@ -43,11 +45,25 @@ export function NavSectionMini({
 
 // ----------------------------------------------------------------------
 
-function Group({ items, render, slotProps, enabledRootRedirect, cssVars }) {
+function Group({ items, render, slotProps, enabledRootRedirect, cssVars, currentRole }) {
+  const filteredItems = items.filter((item) => {
+    // If no roles are specified, show the item
+    if (!item.roles) {
+      return true;
+    }
+    // If roles are specified, check if current role is included
+    return item.roles.includes(currentRole);
+  });
+
+  // Don't render the group if no items are visible
+  if (filteredItems.length === 0) {
+    return null;
+  }
+
   return (
     <NavLi>
       <NavUl sx={{ gap: 'var(--nav-item-gap)' }}>
-        {items.map((list) => (
+        {filteredItems.map((list) => (
           <NavList
             key={list.title}
             depth={1}
@@ -56,6 +72,7 @@ function Group({ items, render, slotProps, enabledRootRedirect, cssVars }) {
             cssVars={cssVars}
             slotProps={slotProps}
             enabledRootRedirect={enabledRootRedirect}
+            currentRole={currentRole}
           />
         ))}
       </NavUl>

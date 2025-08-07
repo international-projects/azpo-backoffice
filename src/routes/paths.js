@@ -58,5 +58,11 @@ export const paths = {
       new: `${ROOTS.DASHBOARD}/categories/new`,
       edit: (id) => `${ROOTS.DASHBOARD}/categories/${id}/edit`,
     },
+    plpDocs: {
+      root: '/plp-docs',
+    },
+    customers: {
+      root: '/customers',
+    },
   },
 };

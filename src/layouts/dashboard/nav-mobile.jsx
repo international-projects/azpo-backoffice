@@ -11,7 +11,7 @@ import { NavSectionVertical } from 'src/components/nav-section';
 
 // ----------------------------------------------------------------------
 
-export function NavMobile({ data, open, onClose, slots, sx, ...other }) {
+export function NavMobile({ data, open, onClose, slots, sx, currentRole, ...other }) {
   const pathname = usePathname();
 
   useEffect(() => {
@@ -41,7 +41,12 @@ export function NavMobile({ data, open, onClose, slots, sx, ...other }) {
       )}
 
       <Scrollbar fillContent>
-        <NavSectionVertical data={data} sx={{ px: 2, flex: '1 1 auto' }} {...other} />
+        <NavSectionVertical
+          data={data}
+          sx={{ px: 2, flex: '1 1 auto' }}
+          currentRole={currentRole}
+          {...other}
+        />
         {/* <NavUpgrade /> */}
       </Scrollbar>
 

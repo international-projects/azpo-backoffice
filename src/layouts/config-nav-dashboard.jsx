@@ -38,6 +38,9 @@ const ICONS = {
   dashboard: icon('ic-dashboard'),
   parameter: icon('ic-parameter'),
   categories: icon('ic-folder'),
+  building: icon('ic-building'),
+  document: icon('ic-document'),
+  customer: icon('ic-customer'),
 };
 
 // ----------------------------------------------------------------------
@@ -51,21 +54,37 @@ export const navData = [
     items: [{ title: ' فروش', path: paths.dashboard.root, icon: ICONS.dashboard }],
   },
   /**
+   * Property Management
+   */
+  {
+    subheader: 'Property Management',
+    items: [
+      {
+        title: 'All Properties',
+        path: paths.dashboard.root,
+        icon: ICONS.building,
+        roles: ['full_admin', 'data_entry'],
+      },
+      {
+        title: 'PLP Documents',
+        path: paths.dashboard.plpDocs.root,
+        icon: ICONS.document,
+        roles: ['full_admin'],
+      },
+      {
+        title: 'Customer Requests',
+        path: paths.dashboard.customers.root,
+        icon: ICONS.customer,
+        roles: ['full_admin'],
+      },
+    ],
+  },
+  /**
    * Management
    */
   {
     subheader: 'Management',
     items: [
-      // {
-      //   title: 'Group',
-      //   path: paths.dashboard.group.root,
-      //   icon: ICONS.user,
-      //   children: [
-      //     { title: 'Four', path: paths.dashboard.group.root },
-      //     { title: 'Five', path: paths.dashboard.group.five },
-      //     { title: 'Six', path: paths.dashboard.group.six },
-      //   ],
-      // },
       {
         title: 'User Management',
         path: paths.dashboard.user.root,

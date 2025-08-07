@@ -12,6 +12,14 @@ import { AuthContext } from '../auth-context';
 
 // ----------------------------------------------------------------------
 
+// Helper function to determine admin type based on username
+const getAdminType = (username) => {
+  if (username === 'entryteam') return 'data_entry';
+  if (username === 'fulladmin') return 'full_admin';
+  if (username === 'formadmin') return 'form_admin';
+  return 'full_admin'; // default
+};
+
 export function AuthProvider({ children }) {
   const { state, setState } = useSetState({
     user: null,
@@ -48,10 +56,12 @@ export function AuthProvider({ children }) {
           if (storedUserData) {
             try {
               const parsedUser = JSON.parse(storedUserData);
+              const adminType = getAdminType(parsedUser.username);
               user = {
                 ...parsedUser,
                 accessToken,
                 role: 'admin',
+                adminType,
               };
             } catch (parseError) {
               console.error('Error parsing stored user data:', parseError);
@@ -60,6 +70,7 @@ export function AuthProvider({ children }) {
                 email: 'user@example.com',
                 role: 'admin',
                 accessToken,
+                adminType: 'full_admin',
               };
             }
           } else {
@@ -68,6 +79,7 @@ export function AuthProvider({ children }) {
               email: 'user@example.com',
               role: 'admin',
               accessToken,
+              adminType: 'full_admin',
             };
           }
 
@@ -99,6 +111,7 @@ export function AuthProvider({ children }) {
         ? {
             ...state.user,
             role: state.user?.role ?? 'admin',
+            adminType: state.user?.adminType ?? 'full_admin',
           }
         : null,
       checkUserSession,

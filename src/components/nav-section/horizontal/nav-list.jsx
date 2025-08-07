@@ -16,7 +16,15 @@ import { navSectionClasses } from '../classes';
 
 // ----------------------------------------------------------------------
 
-export function NavList({ data, depth, render, cssVars, slotProps, enabledRootRedirect }) {
+export function NavList({
+  data,
+  depth,
+  render,
+  cssVars,
+  slotProps,
+  enabledRootRedirect,
+  currentRole,
+}) {
   const theme = useTheme();
 
   const pathname = usePathname();
@@ -71,8 +79,8 @@ export function NavList({ data, depth, render, cssVars, slotProps, enabledRootRe
   );
 
   // Hidden item by role
-  if (data.roles && slotProps?.currentRole) {
-    if (!data?.roles?.includes(slotProps?.currentRole)) {
+  if (data.roles && currentRole) {
+    if (!data?.roles?.includes(currentRole)) {
       return null;
     }
   }
@@ -106,31 +114,20 @@ export function NavList({ data, depth, render, cssVars, slotProps, enabledRootRe
                 boxShadow: 'none',
                 overflow: 'unset',
                 backdropFilter: 'none',
-                background: 'transparent',
-                ...(depth === 1 && { ml: -0.75 }),
-                ...(openMenu && { pointerEvents: 'auto' }),
+                ...paper({ theme }),
               },
             },
           }}
-          sx={{ ...cssVars, pointerEvents: 'none' }}
         >
-          <Paper
-            className={navSectionClasses.paper}
-            sx={{
-              minWidth: 180,
-              ...paper({ theme, dropdown: true }),
-              ...slotProps?.paper,
-            }}
-          >
-            <NavSubList
-              data={data.children}
-              depth={depth}
-              render={render}
-              cssVars={cssVars}
-              slotProps={slotProps}
-              enabledRootRedirect={enabledRootRedirect}
-            />
-          </Paper>
+          <NavSubList
+            data={data.children}
+            depth={depth}
+            render={render}
+            cssVars={cssVars}
+            slotProps={slotProps}
+            enabledRootRedirect={enabledRootRedirect}
+            currentRole={currentRole}
+          />
         </Popover>
       </NavLi>
     );
@@ -142,18 +139,19 @@ export function NavList({ data, depth, render, cssVars, slotProps, enabledRootRe
 
 // ----------------------------------------------------------------------
 
-function NavSubList({ data, depth, render, cssVars, slotProps, enabledRootRedirect }) {
+function NavSubList({ data, depth, render, cssVars, slotProps, enabledRootRedirect, currentRole }) {
   return (
-    <NavUl sx={{ gap: 0.5 }}>
+    <NavUl sx={{ gap: 'var(--nav-item-gap)' }}>
       {data.map((list) => (
         <NavList
           key={list.title}
+          depth={depth + 1}
           data={list}
           render={render}
-          depth={depth + 1}
           cssVars={cssVars}
           slotProps={slotProps}
           enabledRootRedirect={enabledRootRedirect}
+          currentRole={currentRole}
         />
       ))}
     </NavUl>

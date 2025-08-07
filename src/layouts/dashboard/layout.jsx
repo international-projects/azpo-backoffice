@@ -7,6 +7,7 @@ import { useTheme } from '@mui/material/styles';
 import { iconButtonClasses } from '@mui/material/IconButton';
 
 import { useBoolean } from 'src/hooks/use-boolean';
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
 import { _contacts, _notifications } from 'src/_mock';
 import { varAlpha, stylesMode } from 'src/theme/styles';
@@ -34,6 +35,8 @@ export function DashboardLayout({ sx, children, data }) {
 
   const settings = useSettingsContext();
 
+  const { user } = useAuthContext();
+
   const navColorVars = useNavColorVars(theme, settings);
 
   const layoutQuery = 'lg';
@@ -46,6 +49,9 @@ export function DashboardLayout({ sx, children, data }) {
 
   const isNavVertical = isNavMini || settings.navLayout === 'vertical';
 
+  // Get current admin type for role-based navigation
+  const currentRole = user?.adminType || 'full_admin';
+
   return (
     <>
       <NavMobile
@@ -53,6 +59,7 @@ export function DashboardLayout({ sx, children, data }) {
         open={mobileNavOpen.value}
         onClose={mobileNavOpen.onFalse}
         cssVars={navColorVars.section}
+        currentRole={currentRole}
       />
 
       <LayoutSection
@@ -94,6 +101,7 @@ export function DashboardLayout({ sx, children, data }) {
                   data={navData}
                   layoutQuery={layoutQuery}
                   cssVars={navColorVars.section}
+                  currentRole={currentRole}
                 />
               ) : null,
             }}
@@ -150,6 +158,7 @@ export function DashboardLayout({ sx, children, data }) {
               isNavMini={isNavMini}
               layoutQuery={layoutQuery}
               cssVars={navColorVars.section}
+              currentRole={currentRole}
               onToggleNav={() =>
                 settings.onUpdateField(
                   'navLayout',
