@@ -1,7 +1,9 @@
 'use client';
 
+import { PropertiesListViewTwo } from 'src/sections/properties';
+
 // ----------------------------------------------------------------------
 
-export default function Page() {
-  return <div>Dashboard</div>;
+export default function DashboardPage() {
+  return <PropertiesListViewTwo />;
 }
