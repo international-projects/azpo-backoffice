@@ -219,7 +219,7 @@ export function PropertiesListViewTwo() {
         <Button
           variant="contained"
           startIcon={<Icon icon="mdi:plus" />}
-          onClick={() => router.push('/add-property')}
+          onClick={() => router.push('/dashboard/properties/add')}
         >
           Add Property
         </Button>

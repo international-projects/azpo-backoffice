@@ -61,7 +61,7 @@ export const navData = [
     items: [
       {
         title: 'All Properties',
-        path: paths.dashboard.root,
+        path: paths.dashboard.properties.root,
         icon: ICONS.building,
         roles: ['full_admin', 'data_entry'],
       },

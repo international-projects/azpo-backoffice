@@ -64,5 +64,8 @@ export const paths = {
     customers: {
       root: '/customers',
     },
+    properties: {
+      root: `${ROOTS.DASHBOARD}/properties`,
+    },
   },
 };
