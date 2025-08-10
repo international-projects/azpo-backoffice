@@ -163,10 +163,10 @@ export function PropertyNewEditForm({ currentProperty, options }) {
             </Grid>
             <Grid item xs={12} md={8}>
               <PropertyNewEditDetails isMulti={isMultiValue} options={options} />
+              <PropertyNewEditMedia />
             </Grid>
             <Grid item xs={12} md={4}>
               <Stack spacing={3}>
-                <PropertyNewEditMedia />
                 <PropertyNewEditFeatures options={options} />
               </Stack>
             </Grid>
