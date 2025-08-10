@@ -1,6 +1,8 @@
+'use client';
+
 import * as z from 'zod';
 import useSWR from 'swr';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, FormProvider } from 'react-hook-form';
@@ -15,6 +17,7 @@ import {
   Container,
   Typography,
   FormControlLabel,
+  CircularProgress,
 } from '@mui/material';
 
 import { PropertyNewEditMedia } from './property-new-edit-media';
@@ -25,22 +28,48 @@ import { PropertyNewEditFeatures } from './property-new-edit-features';
 // API Configuration
 const API_BASE_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'https://api.realestate.com/api';
 
-// SWR Fetcher
-const fetcher = (url) => fetch(url).then((res) => res.json());
+// SWR Fetcher for multiple parallel requests
+const multiFetcher = (urls) => Promise.all(urls.map((url) => fetch(url).then((res) => res.json())));
 
 // Hook to fetch all form options
 function usePropertyOptions() {
-  const { data, error } = useSWR(`${API_BASE_URL}/dashboard/property-options`, fetcher); // Replace with your actual endpoint
+  const locale = 'en'; // Or get from context/params
+  const urls = [
+    `${API_BASE_URL}/dashboard/properties/features/${locale}`,
+    `${API_BASE_URL}/real-estates/locations/${locale}`,
+    `${API_BASE_URL}/dashboard/properties/types/${locale}`,
+    `${API_BASE_URL}/dashboard/properties/tags/${locale}`,
+    `${API_BASE_URL}/dashboard/properties/landscapes/${locale}`,
+    `${API_BASE_URL}/dashboard/properties/heating-types/${locale}`,
+    `${API_BASE_URL}/dashboard/properties/house-types`,
+  ];
+
+  const { data, error } = useSWR(urls, multiFetcher);
+
+  const options = useMemo(() => {
+    if (!data)
+      return {
+        locs: [],
+        types: [],
+        tags: [],
+        features: [],
+        landscapesData: [],
+        heating: [],
+        typeHouses: [],
+      };
+    return {
+      features: data[0],
+      locs: data[1],
+      types: data[2],
+      tags: data[3],
+      landscapesData: data[4],
+      heating: data[5],
+      typeHouses: data[6],
+    };
+  }, [data]);
+
   return {
-    options: data || {
-      locs: [],
-      types: [],
-      tags: [],
-      features: [],
-      heating: [],
-      landscapesData: [],
-      typeHouses: [],
-    },
+    options,
     isLoading: !error && !data,
     isError: error,
   };
@@ -53,41 +82,32 @@ const PropertySchema = z.object({
   description: z.string().optional(),
   images: z.array(z.any()).min(1, 'At least one image is required'),
   pdfs: z.array(z.any()).optional(),
-
-  // Details
-  baths: z.number().min(1, 'Required'),
-  maxBaths: z.number().optional(),
+  baths: z.coerce.number().min(1, 'Required'),
+  maxBaths: z.coerce.number().optional(),
   beds: z.string().min(1, 'Required'),
-  maxBeds: z.number().optional(),
-  sqt: z.number().min(1, 'Required'),
-  maxSqt: z.number().optional(),
+  maxBeds: z.coerce.number().optional(),
+  sqt: z.coerce.number().min(1, 'Required'),
+  maxSqt: z.coerce.number().optional(),
   locationValue: z.string().min(1, 'Location is required'),
   areaValue: z.string().min(1, 'Area is required'),
   typeValue: z.array(z.number()).min(1, 'Type is required'),
   typeUnit: z.array(z.number()).min(1, 'Unit type is required'),
-
-  // Distances
-  distShop: z.number().min(1, 'Required'),
+  distShop: z.coerce.number().min(1, 'Required'),
   shopType: z.string().min(1, 'Required'),
-  distAirport: z.number().min(1, 'Required'),
+  distAirport: z.coerce.number().min(1, 'Required'),
   airportType: z.string().min(1, 'Required'),
-  distHospital: z.number().min(1, 'Required'),
+  distHospital: z.coerce.number().min(1, 'Required'),
   hospitalType: z.string().min(1, 'Required'),
-  distSea: z.number().min(1, 'Required'),
+  distSea: z.coerce.number().min(1, 'Required'),
   seaType: z.string().min(1, 'Required'),
-
   mapLink: z.string().url('Must be a valid URL'),
-  floor: z.number().min(0, 'Required'),
-  maxFloor: z.number().optional(),
-  ageOfBuilding: z.number().min(0, 'Required'),
-
-  // Pricing
-  minPrice: z.number().min(1, 'Required'),
-  maxPrice: z.number().optional(),
+  floor: z.coerce.number().min(0, 'Required'),
+  maxFloor: z.coerce.number().optional(),
+  ageOfBuilding: z.coerce.number().min(0, 'Required'),
+  minPrice: z.coerce.number().min(1, 'Required'),
+  maxPrice: z.coerce.number().optional(),
   moneyType: z.enum(['dollar', 'euro', 'ruble']),
   furnished: z.boolean(),
-
-  // Features
   tags: z.array(z.number()).optional(),
   features: z.array(z.number()).optional(),
   heating: z.array(z.number()).optional(),
@@ -97,7 +117,6 @@ const PropertySchema = z.object({
 export function PropertyNewEditForm({ currentProperty }) {
   const router = useRouter();
   const { options, isLoading: isLoadingOptions } = usePropertyOptions();
-  const [isMulti, setIsMulti] = useState(currentProperty?.isMulti || false);
 
   const defaultValues = useMemo(
     () => ({
@@ -152,22 +171,34 @@ export function PropertyNewEditForm({ currentProperty }) {
     formState: { isSubmitting },
   } = methods;
 
-  // Watch the isMulti field to conditionally render fields
   const isMultiValue = watch('isMulti');
 
   const onSubmit = handleSubmit(async (data) => {
     try {
       console.log('Form Data:', data);
-      // Example POST request
-      // await fetch(`${API_BASE_URL}/dashboard/create/en`, {
-      //   method: 'POST',
-      //   body: JSON.stringify(data),
-      // });
+      // Here you would format the data to match the API payload from your old `insertProperty` function
       router.push('/dashboard/properties');
     } catch (error) {
       console.error(error);
     }
   });
+
+  if (isLoadingOptions) {
+    return (
+      <Container maxWidth="lg">
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: '60vh',
+          }}
+        >
+          <CircularProgress />
+        </Box>
+      </Container>
+    );
+  }
 
   return (
     <FormProvider {...methods}>

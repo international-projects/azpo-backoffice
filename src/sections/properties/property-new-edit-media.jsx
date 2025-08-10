@@ -1,10 +1,10 @@
-import { useDropzone } from 'react-dropzone';
 import { useCallback } from 'react';
+import { useDropzone } from 'react-dropzone';
 import { useFormContext } from 'react-hook-form';
 
-// MUI Components
-import { Typography, Box, Card, CardHeader, CardContent, Stack } from '@mui/material';
 import { styled } from '@mui/material/styles';
+// MUI Components
+import { Box, Card, Stack, Typography, CardHeader, CardContent } from '@mui/material';
 
 const DropZoneStyle = styled('div')(({ theme }) => ({
   outline: 'none',
