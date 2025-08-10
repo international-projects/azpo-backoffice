@@ -4,8 +4,6 @@ import { CONFIG } from 'src/config-global';
 
 import { SvgColor } from 'src/components/svg-color';
 
-import { version } from '../../package.json';
-
 // ----------------------------------------------------------------------
 
 const icon = (name) => <SvgColor src={`${CONFIG.site.basePath}/assets/icons/navbar/${name}.svg`} />;
@@ -49,10 +47,7 @@ export const navData = [
   /**
    * Overview
    */
-  {
-    subheader: version,
-    items: [{ title: ' فروش', path: paths.dashboard.root, icon: ICONS.dashboard }],
-  },
+
   /**
    * Property Management
    */
@@ -65,7 +60,7 @@ export const navData = [
         icon: ICONS.building,
         roles: ['full_admin', 'data_entry'],
       },
-      {
+      /*    {
         title: 'PLP Documents',
         path: paths.dashboard.plpDocs.root,
         icon: ICONS.document,
@@ -76,13 +71,13 @@ export const navData = [
         path: paths.dashboard.customers.root,
         icon: ICONS.customer,
         roles: ['full_admin'],
-      },
+      }, */
     ],
   },
   /**
    * Management
    */
-  {
+  /*  {
     subheader: 'Management',
     items: [
       {
@@ -96,5 +91,5 @@ export const navData = [
         icon: ICONS.categories,
       },
     ],
-  },
+  }, */
 ];

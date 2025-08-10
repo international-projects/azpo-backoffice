@@ -21,7 +21,7 @@ export default function PropertyEditPage() {
 
   // Fetch property details and options in parallel
   const urls = [
-    `${API_BASE_URL}/dashboard/properties/${id}`, // Endpoint for a single property
+    `${API_BASE_URL}/dashboard/properties/${id}/${locale}`, // Endpoint for a single property
     `${API_BASE_URL}/dashboard/properties/features/${locale}`,
     `${API_BASE_URL}/real-estates/locations/${locale}`,
     `${API_BASE_URL}/dashboard/properties/types/${locale}`,
