@@ -1,7 +1,6 @@
 'use client';
 
 import * as z from 'zod';
-import useSWR from 'swr';
 import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -17,63 +16,12 @@ import {
   Container,
   Typography,
   FormControlLabel,
-  CircularProgress,
 } from '@mui/material';
 
 import { PropertyNewEditMedia } from './property-new-edit-media';
 // Custom Components
 import { PropertyNewEditDetails } from './property-new-edit-details';
 import { PropertyNewEditFeatures } from './property-new-edit-features';
-
-// API Configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'https://api.realestate.com/api';
-
-// SWR Fetcher for multiple parallel requests
-const multiFetcher = (urls) => Promise.all(urls.map((url) => fetch(url).then((res) => res.json())));
-
-// Hook to fetch all form options
-function usePropertyOptions() {
-  const locale = 'en'; // Or get from context/params
-  const urls = [
-    `${API_BASE_URL}/dashboard/properties/features/${locale}`,
-    `${API_BASE_URL}/real-estates/locations/${locale}`,
-    `${API_BASE_URL}/dashboard/properties/types/${locale}`,
-    `${API_BASE_URL}/dashboard/properties/tags/${locale}`,
-    `${API_BASE_URL}/dashboard/properties/landscapes/${locale}`,
-    `${API_BASE_URL}/dashboard/properties/heating-types/${locale}`,
-    `${API_BASE_URL}/dashboard/properties/house-types`,
-  ];
-
-  const { data, error } = useSWR(urls, multiFetcher);
-
-  const options = useMemo(() => {
-    if (!data)
-      return {
-        locs: [],
-        types: [],
-        tags: [],
-        features: [],
-        landscapesData: [],
-        heating: [],
-        typeHouses: [],
-      };
-    return {
-      features: data[0],
-      locs: data[1],
-      types: data[2],
-      tags: data[3],
-      landscapesData: data[4],
-      heating: data[5],
-      typeHouses: data[6],
-    };
-  }, [data]);
-
-  return {
-    options,
-    isLoading: !error && !data,
-    isError: error,
-  };
-}
 
 // Validation Schema with Zod
 const PropertySchema = z.object({
@@ -114,47 +62,46 @@ const PropertySchema = z.object({
   landscapes: z.array(z.number()).optional(),
 });
 
-export function PropertyNewEditForm({ currentProperty }) {
+export function PropertyNewEditForm({ currentProperty, options }) {
   const router = useRouter();
-  const { options, isLoading: isLoadingOptions } = usePropertyOptions();
 
   const defaultValues = useMemo(
     () => ({
-      isMulti: currentProperty?.isMulti || false,
+      isMulti: currentProperty?.is_multi === 1 || false,
       title: currentProperty?.title || '',
-      description: currentProperty?.description || '',
+      description: currentProperty?.details || '',
       images: currentProperty?.images || [],
-      pdfs: currentProperty?.pdfs || [],
-      baths: currentProperty?.baths || 1,
-      maxBaths: currentProperty?.maxBaths || undefined,
-      beds: currentProperty?.beds || '',
-      maxBeds: currentProperty?.maxBeds || undefined,
-      sqt: currentProperty?.sqt || 0,
-      maxSqt: currentProperty?.maxSqt || undefined,
-      locationValue: currentProperty?.locationValue || '',
-      areaValue: currentProperty?.areaValue || '',
-      typeValue: currentProperty?.typeValue || [],
-      typeUnit: currentProperty?.typeUnit || [],
-      distShop: currentProperty?.distShop || 0,
-      shopType: currentProperty?.shopType || 'm',
-      distAirport: currentProperty?.distAirport || 0,
-      airportType: currentProperty?.airportType || 'km',
-      distHospital: currentProperty?.distHospital || 0,
-      hospitalType: currentProperty?.hospitalType || 'm',
-      distSea: currentProperty?.distSea || 0,
-      seaType: currentProperty?.seaType || 'm',
-      mapLink: currentProperty?.mapLink || '',
-      floor: currentProperty?.floor || 0,
-      maxFloor: currentProperty?.maxFloor || undefined,
-      ageOfBuilding: currentProperty?.ageOfBuilding || 0,
-      minPrice: currentProperty?.minPrice || 0,
-      maxPrice: currentProperty?.maxPrice || undefined,
-      moneyType: currentProperty?.moneyType || 'dollar',
-      furnished: currentProperty?.furnished || false,
-      tags: currentProperty?.tags || [],
-      features: currentProperty?.features || [],
-      heating: currentProperty?.heating || [],
-      landscapes: currentProperty?.landscapes || [],
+      pdfs: currentProperty?.dowloads || [],
+      baths: currentProperty?.bathroom || 1,
+      maxBaths: currentProperty?.max_bath || undefined,
+      beds: currentProperty?.bed_room || '',
+      maxBeds: currentProperty?.max_bed || undefined,
+      sqt: currentProperty?.metrage || 0,
+      maxSqt: currentProperty?.max_sqt || undefined,
+      locationValue: currentProperty?.location || '',
+      areaValue: currentProperty?.area || '',
+      typeValue: currentProperty?.types?.map((t) => t.id) || [],
+      typeUnit: currentProperty?.houseTypes?.map((ht) => ht.id) || [],
+      distShop: currentProperty?.dist_shopping || 0,
+      shopType: currentProperty?.dist_shopping_type || 'm',
+      distAirport: currentProperty?.dist_airport || 0,
+      airportType: currentProperty?.dist_airport_type || 'km',
+      distHospital: currentProperty?.dist_hospital || 0,
+      hospitalType: currentProperty?.dist_hospital_type || 'm',
+      distSea: currentProperty?.dist_sea || 0,
+      seaType: currentProperty?.dist_sea_type || 'm',
+      mapLink: currentProperty?.location_map || '',
+      floor: currentProperty?.building_floor || 0,
+      maxFloor: currentProperty?.max_floor || undefined,
+      ageOfBuilding: currentProperty?.age_of_the_building || 0,
+      minPrice: currentProperty?.price_min || 0,
+      maxPrice: currentProperty?.price_max || undefined,
+      moneyType: currentProperty?.money_type || 'dollar',
+      furnished: currentProperty?.furnished_sale === 1 || false,
+      tags: currentProperty?.tags?.map((t) => t.id) || [],
+      features: currentProperty?.features?.map((f) => f.id) || [],
+      heating: currentProperty?.heatingTypes?.map((h) => h.id) || [],
+      landscapes: currentProperty?.landscapes?.map((l) => l.id) || [],
     }),
     [currentProperty]
   );
@@ -168,6 +115,7 @@ export function PropertyNewEditForm({ currentProperty }) {
     handleSubmit,
     control,
     watch,
+    setValue, // Destructure setValue here
     formState: { isSubmitting },
   } = methods;
 
@@ -176,29 +124,13 @@ export function PropertyNewEditForm({ currentProperty }) {
   const onSubmit = handleSubmit(async (data) => {
     try {
       console.log('Form Data:', data);
-      // Here you would format the data to match the API payload from your old `insertProperty` function
+      // Here you would format and send the data to your API
+      // Differentiate between create and update based on `currentProperty`
       router.push('/dashboard/properties');
     } catch (error) {
       console.error(error);
     }
   });
-
-  if (isLoadingOptions) {
-    return (
-      <Container maxWidth="lg">
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            minHeight: '60vh',
-          }}
-        >
-          <CircularProgress />
-        </Box>
-      </Container>
-    );
-  }
 
   return (
     <FormProvider {...methods}>
@@ -213,7 +145,8 @@ export function PropertyNewEditForm({ currentProperty }) {
                 control={
                   <Switch
                     checked={isMultiValue}
-                    onChange={(e) => control.setValue('isMulti', e.target.checked)}
+                    onChange={(e) => setValue('isMulti', e.target.checked)} // Use setValue directly
+                    disabled={!!currentProperty} // Disable if editing
                   />
                 }
                 label="Is this a project (multiple units)?"
@@ -229,8 +162,8 @@ export function PropertyNewEditForm({ currentProperty }) {
               </Stack>
             </Grid>
           </Grid>
-          <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
-            <Button type="submit" variant="contained" disabled={isSubmitting}>
+          <Box sx={{ my: 5, display: 'flex', justifyContent: 'flex-end' }}>
+            <Button type="submit" variant="contained" size="large" disabled={isSubmitting}>
               {currentProperty ? 'Save Changes' : 'Create Property'}
             </Button>
           </Box>

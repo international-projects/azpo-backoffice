@@ -17,25 +17,23 @@ const DropZoneStyle = styled('div')(({ theme }) => ({
 }));
 
 export function PropertyNewEditMedia() {
-  const { control, watch } = useFormContext();
-  const images = watch('images');
-  const pdfs = watch('pdfs');
+  const { setValue, getValues } = useFormContext();
 
   const handleDropImages = useCallback(
     (acceptedFiles) => {
       const files = acceptedFiles.map((file) =>
         Object.assign(file, { preview: URL.createObjectURL(file) })
       );
-      control.setValue('images', [...control.getValues().images, ...files]);
+      setValue('images', [...getValues().images, ...files]);
     },
-    [control]
+    [setValue, getValues]
   );
 
   const handleDropPdfs = useCallback(
     (acceptedFiles) => {
-      control.setValue('pdfs', [...control.getValues().pdfs, ...acceptedFiles]);
+      setValue('pdfs', [...getValues().pdfs, ...acceptedFiles]);
     },
-    [control]
+    [setValue, getValues]
   );
 
   const { getRootProps: getImageRootProps, getInputProps: getImageInputProps } = useDropzone({

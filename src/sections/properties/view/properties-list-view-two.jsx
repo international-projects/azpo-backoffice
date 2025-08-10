@@ -180,7 +180,7 @@ export function PropertiesListViewTwo() {
 
   const handleEdit = useCallback(
     (id) => {
-      router.push(`/update-property/${id}`);
+      router.push(`/dashboard/properties/edit/${id}`);
     },
     [router]
   );
@@ -219,7 +219,7 @@ export function PropertiesListViewTwo() {
         <Button
           variant="contained"
           startIcon={<Icon icon="mdi:plus" />}
-          onClick={() => router.push('/dashboard/properties/add')}
+          onClick={() => router.push('/dashboard/properties/new')}
         >
           Add Property
         </Button>

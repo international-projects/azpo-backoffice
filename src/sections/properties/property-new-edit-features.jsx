@@ -20,30 +20,31 @@ const FeatureSection = ({ title, options, fieldName }) => {
       <CardContent>
         <FormGroup>
           <Grid container spacing={1}>
-            {options.map((option) => (
-              <Grid item xs={12} sm={6} key={option.id}>
-                <FormControlLabel
-                  control={
-                    <Controller
-                      name={`${fieldName}`}
-                      control={control}
-                      render={({ field }) => (
-                        <Checkbox
-                          checked={field.value.includes(option.id)}
-                          onChange={() => {
-                            const newValue = field.value.includes(option.id)
-                              ? field.value.filter((id) => id !== option.id)
-                              : [...field.value, option.id];
-                            field.onChange(newValue);
-                          }}
-                        />
-                      )}
-                    />
-                  }
-                  label={option.name}
-                />
-              </Grid>
-            ))}
+            {options &&
+              options.map((option) => (
+                <Grid item xs={12} sm={6} key={option.id}>
+                  <FormControlLabel
+                    control={
+                      <Controller
+                        name={`${fieldName}`}
+                        control={control}
+                        render={({ field }) => (
+                          <Checkbox
+                            checked={field.value.includes(option.id)}
+                            onChange={() => {
+                              const newValue = field.value.includes(option.id)
+                                ? field.value.filter((id) => id !== option.id)
+                                : [...field.value, option.id];
+                              field.onChange(newValue);
+                            }}
+                          />
+                        )}
+                      />
+                    }
+                    label={option.name}
+                  />
+                </Grid>
+              ))}
           </Grid>
         </FormGroup>
       </CardContent>
