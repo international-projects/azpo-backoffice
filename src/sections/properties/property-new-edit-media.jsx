@@ -1,10 +1,22 @@
 import { useCallback } from 'react';
+import { Icon } from '@iconify/react';
 import { useDropzone } from 'react-dropzone';
 import { useFormContext } from 'react-hook-form';
 
 import { styled } from '@mui/material/styles';
 // MUI Components
-import { Box, Card, Stack, Typography, CardHeader, CardContent } from '@mui/material';
+import {
+  Box,
+  Card,
+  List,
+  Stack,
+  ListItem,
+  Typography,
+  CardHeader,
+  IconButton,
+  CardContent,
+  ListItemText,
+} from '@mui/material';
 
 const DropZoneStyle = styled('div')(({ theme }) => ({
   outline: 'none',
@@ -17,7 +29,23 @@ const DropZoneStyle = styled('div')(({ theme }) => ({
 }));
 
 export function PropertyNewEditMedia() {
-  const { setValue, getValues } = useFormContext();
+  const { setValue, getValues, watch } = useFormContext();
+  const images = watch('images');
+  const pdfs = watch('pdfs');
+
+  const handleRemoveImage = (fileToRemove) => {
+    setValue(
+      'images',
+      getValues().images.filter((file) => file !== fileToRemove)
+    );
+  };
+
+  const handleRemovePdf = (fileToRemove) => {
+    setValue(
+      'pdfs',
+      getValues().pdfs.filter((file) => file !== fileToRemove)
+    );
+  };
 
   const handleDropImages = useCallback(
     (acceptedFiles) => {
@@ -38,11 +66,11 @@ export function PropertyNewEditMedia() {
 
   const { getRootProps: getImageRootProps, getInputProps: getImageInputProps } = useDropzone({
     onDrop: handleDropImages,
-    accept: 'image/*',
+    accept: { 'image/*': [] },
   });
   const { getRootProps: getPdfRootProps, getInputProps: getPdfInputProps } = useDropzone({
     onDrop: handleDropPdfs,
-    accept: '.pdf',
+    accept: { 'application/pdf': [] },
   });
 
   return (
@@ -54,7 +82,27 @@ export function PropertyNewEditMedia() {
             <input {...getImageInputProps()} />
             <Typography>Drag & drop or click to select images</Typography>
           </Box>
-          {/* Add image previews here */}
+          <List>
+            {images.map((file, index) => (
+              <ListItem
+                key={index}
+                secondaryAction={
+                  <IconButton edge="end" onClick={() => handleRemoveImage(file)}>
+                    <Icon icon="mdi:close" />
+                  </IconButton>
+                }
+              >
+                <img
+                  src={file.preview || file.file_name}
+                  alt={file.name}
+                  width={50}
+                  height={50}
+                  style={{ marginRight: '16px', borderRadius: '4px' }}
+                />
+                <ListItemText primary={file.name || file.file_name} />
+              </ListItem>
+            ))}
+          </List>
         </CardContent>
       </Card>
       <Card>
@@ -64,7 +112,26 @@ export function PropertyNewEditMedia() {
             <input {...getPdfInputProps()} />
             <Typography>Drag & drop or click to select PDFs</Typography>
           </Box>
-          {/* Add PDF list here */}
+          <List>
+            {pdfs.map((file, index) => (
+              <ListItem
+                key={index}
+                secondaryAction={
+                  <IconButton edge="end" onClick={() => handleRemovePdf(file)}>
+                    <Icon icon="mdi:close" />
+                  </IconButton>
+                }
+              >
+                <Icon
+                  icon="mdi:file-pdf-box"
+                  width={40}
+                  height={40}
+                  style={{ marginRight: '16px' }}
+                />
+                <ListItemText primary={file.name} />
+              </ListItem>
+            ))}
+          </List>
         </CardContent>
       </Card>
     </Stack>

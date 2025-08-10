@@ -1,8 +1,9 @@
 import 'react-quill/dist/quill.snow.css';
 
+import useSWR from 'swr';
+import { useEffect } from 'react';
 import ReactQuill from 'react-quill';
 import { Icon } from '@iconify/react';
-import { useState, useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 // MUI Components
@@ -26,46 +27,35 @@ import {
   ToggleButtonGroup,
 } from '@mui/material';
 
-// This is a mock function, replace with your actual API call
-const fetchAreasForLocation = async (locationKey) => {
-  // In a real app, you would fetch this from your API
-  // e.g., const response = await fetch(`/api/areas?location=${locationKey}`);
-  console.log(`Fetching areas for ${locationKey}`);
-  const mockData = {
-    istanbul: [
-      { id: 1, area_key: 'kadikoy', area_name: 'Kadikoy' },
-      { id: 2, area_key: 'besiktas', area_name: 'Besiktas' },
-    ],
-    antalya: [
-      { id: 3, area_key: 'konyaalti', area_name: 'Konyaalti' },
-      { id: 4, area_key: 'muratpasa', area_name: 'Muratpasa' },
-    ],
-    alanya: [{ id: 5, area_key: 'mahmutlar', area_name: 'Mahmutlar' }],
-    mersin: [{ id: 6, area_key: 'mezitli', area_name: 'Mezitli' }],
+const API_BASE_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'https://api.realestate.com/api';
+const fetcher = (url) => fetch(url).then((res) => res.json());
+
+// Hook to fetch areas based on locationId
+function useAreas(locationId) {
+  const locale = 'en';
+  const url = locationId ? `${API_BASE_URL}/real-estates/areas/${locationId}/${locale}` : null;
+  const { data, error } = useSWR(url, fetcher);
+  return {
+    areas: data || [],
+    isLoading: !error && !data && !!locationId,
   };
-  return mockData[locationKey] || [];
-};
+}
 
 export function PropertyNewEditDetails({ isMulti, options }) {
   const { control, watch, setValue } = useFormContext();
   const { locs, types, typeHouses } = options;
 
-  const [areaList, setAreaList] = useState([]);
   const locationValue = watch('locationValue');
 
+  const selectedLocation = locs.find((loc) => loc.location_key === locationValue);
+  const { areas, isLoading: isLoadingAreas } = useAreas(selectedLocation?.id);
+
   useEffect(() => {
+    // When location changes, reset the area value
     if (locationValue) {
-      fetchAreasForLocation(locationValue).then((data) => {
-        setAreaList(data);
-        // Reset area if the new location doesn't have the currently selected area
-        if (data.length > 0 && !data.some((area) => area.area_key === watch('areaValue'))) {
-          setValue('areaValue', '');
-        }
-      });
-    } else {
-      setAreaList([]);
+      setValue('areaValue', '');
     }
-  }, [locationValue, setValue, watch]);
+  }, [locationValue, setValue]);
 
   return (
     <Card>
@@ -168,11 +158,11 @@ export function PropertyNewEditDetails({ isMulti, options }) {
                     select
                     label="Area"
                     fullWidth
-                    disabled={!locationValue || areaList.length === 0}
+                    disabled={!locationValue || isLoadingAreas}
                     error={!!error}
                     helperText={error?.message}
                   >
-                    {areaList.map((opt) => (
+                    {areas.map((opt) => (
                       <MenuItem key={opt.id} value={opt.area_key}>
                         {opt.area_name}
                       </MenuItem>
@@ -499,7 +489,6 @@ export function PropertyNewEditDetails({ isMulti, options }) {
                 theme="snow"
                 value={field.value}
                 onChange={field.onChange}
-                height={300}
                 placeholder="Write a detailed description..."
               />
             )}

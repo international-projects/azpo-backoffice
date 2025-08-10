@@ -1,5 +1,3 @@
-'use client';
-
 import * as z from 'zod';
 import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
@@ -25,41 +23,49 @@ import { PropertyNewEditFeatures } from './property-new-edit-features';
 
 // Validation Schema with Zod
 const PropertySchema = z.object({
-  isMulti: z.boolean(),
-  title: z.string().min(1, 'Title is required'),
-  description: z.string().optional(),
-  images: z.array(z.any()).min(1, 'At least one image is required'),
-  pdfs: z.array(z.any()).optional(),
-  baths: z.coerce.number().min(1, 'Required'),
-  maxBaths: z.coerce.number().optional(),
-  beds: z.string().min(1, 'Required'),
-  maxBeds: z.coerce.number().optional(),
-  sqt: z.coerce.number().min(1, 'Required'),
-  maxSqt: z.coerce.number().optional(),
-  locationValue: z.string().min(1, 'Location is required'),
-  areaValue: z.string().min(1, 'Area is required'),
-  typeValue: z.array(z.number()).min(1, 'Type is required'),
-  typeUnit: z.array(z.number()).min(1, 'Unit type is required'),
-  distShop: z.coerce.number().min(1, 'Required'),
-  shopType: z.string().min(1, 'Required'),
-  distAirport: z.coerce.number().min(1, 'Required'),
-  airportType: z.string().min(1, 'Required'),
-  distHospital: z.coerce.number().min(1, 'Required'),
-  hospitalType: z.string().min(1, 'Required'),
-  distSea: z.coerce.number().min(1, 'Required'),
-  seaType: z.string().min(1, 'Required'),
-  mapLink: z.string().url('Must be a valid URL'),
-  floor: z.coerce.number().min(0, 'Required'),
-  maxFloor: z.coerce.number().optional(),
-  ageOfBuilding: z.coerce.number().min(0, 'Required'),
-  minPrice: z.coerce.number().min(1, 'Required'),
-  maxPrice: z.coerce.number().optional(),
-  moneyType: z.enum(['dollar', 'euro', 'ruble']),
-  furnished: z.boolean(),
-  tags: z.array(z.number()).optional(),
-  features: z.array(z.number()).optional(),
-  heating: z.array(z.number()).optional(),
-  landscapes: z.array(z.number()).optional(),
+  // isMulti: z.boolean(),
+  // title: z.string().min(1, 'Title is required'),
+  // description: z.string().optional(),
+  // images: z.array(z.any()).min(1, 'At least one image is required'),
+  // pdfs: z.array(z.any()).optional(),
+  // baths: z.coerce.number().min(1, 'Required'),
+  // maxBaths: z.coerce.number().optional(),
+  // beds: z.string().min(1, 'Required'),
+  // maxBeds: z.coerce.number().optional(),
+  // sqt: z.coerce.number().min(1, 'Required'),
+  // maxSqt: z.coerce.number().optional(),
+  // locationValue: z.string().min(1, 'Location is required'),
+  // areaValue: z.string().min(1, 'Area is required'),
+  // typeValue: z
+  //   .union([z.array(z.number()), z.number()])
+  //   .refine((val) => (Array.isArray(val) ? val.length > 0 : !!val), {
+  //     message: 'Type is required',
+  //   }),
+  // typeUnit: z
+  //   .union([z.array(z.number()), z.number()])
+  //   .refine((val) => (Array.isArray(val) ? val.length > 0 : !!val), {
+  //     message: 'Unit type is required',
+  //   }),
+  // distShop: z.coerce.number().min(1, 'Required'),
+  // shopType: z.string().min(1, 'Required'),
+  // distAirport: z.coerce.number().min(1, 'Required'),
+  // airportType: z.string().min(1, 'Required'),
+  // distHospital: z.coerce.number().min(1, 'Required'),
+  // hospitalType: z.string().min(1, 'Required'),
+  // distSea: z.coerce.number().min(1, 'Required'),
+  // seaType: z.string().min(1, 'Required'),
+  // mapLink: z.string().url('Must be a valid URL'),
+  // floor: z.coerce.number().min(0, 'Required'),
+  // maxFloor: z.coerce.number().optional(),
+  // ageOfBuilding: z.coerce.number().min(0, 'Required'),
+  // minPrice: z.coerce.number().min(1, 'Required'),
+  // maxPrice: z.coerce.number().optional(),
+  // moneyType: z.enum(['dollar', 'euro', 'ruble']),
+  // furnished: z.boolean(),
+  // tags: z.array(z.number()).optional(),
+  // features: z.array(z.number()).optional(),
+  // heating: z.array(z.number()).optional(),
+  // landscapes: z.array(z.number()).optional(),
 });
 
 export function PropertyNewEditForm({ currentProperty, options }) {
@@ -80,8 +86,12 @@ export function PropertyNewEditForm({ currentProperty, options }) {
       maxSqt: currentProperty?.max_sqt || undefined,
       locationValue: currentProperty?.location || '',
       areaValue: currentProperty?.area || '',
-      typeValue: currentProperty?.types?.map((t) => t.id) || [],
-      typeUnit: currentProperty?.houseTypes?.map((ht) => ht.id) || [],
+      typeValue: currentProperty?.is_multi
+        ? currentProperty?.types?.map((t) => t.id) || []
+        : currentProperty?.types?.[0]?.id || '',
+      typeUnit: currentProperty?.is_multi
+        ? currentProperty?.houseTypes?.map((ht) => ht.id) || []
+        : currentProperty?.houseTypes?.[0]?.id || '',
       distShop: currentProperty?.dist_shopping || 0,
       shopType: currentProperty?.dist_shopping_type || 'm',
       distAirport: currentProperty?.dist_airport || 0,
@@ -113,9 +123,8 @@ export function PropertyNewEditForm({ currentProperty, options }) {
 
   const {
     handleSubmit,
-    control,
     watch,
-    setValue, // Destructure setValue here
+    setValue, // Destructure setValue from methods
     formState: { isSubmitting },
   } = methods;
 
@@ -162,8 +171,8 @@ export function PropertyNewEditForm({ currentProperty, options }) {
               </Stack>
             </Grid>
           </Grid>
-          <Box sx={{ my: 5, display: 'flex', justifyContent: 'flex-end' }}>
-            <Button type="submit" variant="contained" size="large" disabled={isSubmitting}>
+          <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+            <Button type="submit" variant="contained" disabled={isSubmitting}>
               {currentProperty ? 'Save Changes' : 'Create Property'}
             </Button>
           </Box>
