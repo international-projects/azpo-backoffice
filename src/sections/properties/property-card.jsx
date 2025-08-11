@@ -64,7 +64,7 @@ function PropertyCard({ property, onEdit, onDelete }) {
           }}
         >
           <Icon icon={currencyIcon} width={16} style={{ marginRight: 4 }} />
-          {price.toLocaleString()}
+          {price}
         </Stack>
         <CardMedia
           component="img"

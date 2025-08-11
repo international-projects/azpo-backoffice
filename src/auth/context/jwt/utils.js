@@ -76,7 +76,6 @@ export async function setSession(accessToken) {
       // action.js:57 Refused to set unsafe header "cookie"
 
       axios.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
-      console.log('accessToken', accessToken);
 
       // const decodedToken = jwtDecode(accessToken); // ~3 days by minimals server
 

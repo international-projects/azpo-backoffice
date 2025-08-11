@@ -58,6 +58,8 @@ import {
   DialogContentText,
 } from '@mui/material';
 
+import { STORAGE_KEY } from 'src/auth/context/jwt';
+
 import PropertyCard from '../property-card';
 
 // Environment Variables
@@ -198,6 +200,9 @@ export function PropertiesListViewTwo() {
     try {
       await fetch(`${API_BASE_URL}/dashboard/property/delete/${dialogState.propId}`, {
         method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem(STORAGE_KEY)}`,
+        },
       });
       closeDeleteDialog();
       mutate();

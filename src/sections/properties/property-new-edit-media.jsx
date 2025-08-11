@@ -32,47 +32,76 @@ const DropZoneStyle = styled('div')(({ theme }) => ({
 
 export function PropertyNewEditMedia() {
   const { setValue, getValues, watch } = useFormContext();
-  const images = watch('images');
-  const pdfs = watch('pdfs');
+  const images = watch('imagesArr');
+  const downloads = watch('downloads');
   const [previewImage, setPreviewImage] = useState(null);
 
   const getImageUrl = (file) => {
-    if (file.preview) {
-      return file.preview; // For new files
+    if (file.image) {
+      // New base64 image
+      return file.image;
     }
     if (file.file_name) {
-      return `${process.env.NEXT_PUBLIC_SERVER_URL}/files/property-images/${file.file_name}`; // For existing files
+      // Existing image from server
+      return `${process.env.NEXT_PUBLIC_SERVER_URL}/files/property-images/${file.file_name}`;
     }
     return `https://placehold.co/600x400/e0e0e0/333?text=No+Image`;
   };
 
   const handleRemoveImage = (fileToRemove) => {
+    const identifier = fileToRemove.id || fileToRemove.name;
     setValue(
-      'images',
-      getValues().images.filter((file) => file !== fileToRemove)
+      'imagesArr',
+      getValues().imagesArr.filter((file) => (file.id || file.name) !== identifier)
     );
   };
 
   const handleRemovePdf = (fileToRemove) => {
     setValue(
-      'pdfs',
-      getValues().pdfs.filter((file) => file !== fileToRemove)
+      'downloadsArr',
+      getValues().downloads.filter((file) => file.name !== fileToRemove.name)
     );
   };
 
   const handleDropImages = useCallback(
     (acceptedFiles) => {
-      const files = acceptedFiles.map((file) =>
-        Object.assign(file, { preview: URL.createObjectURL(file) })
-      );
-      setValue('images', [...getValues().images, ...files]);
+      const currentImages = getValues().imagesArr || [];
+      acceptedFiles.forEach((file) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          if (reader.result) {
+            const newImage = {
+              id: `${file.lastModified}-${file.size}`, // Unique ID for local files
+              image: reader.result.toString(),
+              name: file.name,
+              order: currentImages.length + 1,
+            };
+            setValue('imagesArr', [...getValues().imagesArr, newImage]);
+          }
+        };
+        reader.readAsDataURL(file);
+      });
     },
     [setValue, getValues]
   );
 
-  const handleDropPdfs = useCallback(
+  const handleDropdownloads = useCallback(
     (acceptedFiles) => {
-      setValue('pdfs', [...getValues().pdfs, ...acceptedFiles]);
+      const currentdownloads = getValues().downloads || [];
+      acceptedFiles.forEach((file) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          if (reader.result) {
+            const newPdf = {
+              file: reader.result.toString(),
+              name: file.name,
+              order: currentdownloads.length + 1,
+            };
+            setValue('downloads', [...getValues().downloads, newPdf]);
+          }
+        };
+        reader.readAsDataURL(file);
+      });
     },
     [setValue, getValues]
   );
@@ -82,7 +111,7 @@ export function PropertyNewEditMedia() {
     accept: { 'image/*': [] },
   });
   const { getRootProps: getPdfRootProps, getInputProps: getPdfInputProps } = useDropzone({
-    onDrop: handleDropPdfs,
+    onDrop: handleDropdownloads,
     accept: { 'application/pdf': [] },
   });
 
@@ -97,26 +126,32 @@ export function PropertyNewEditMedia() {
               <Typography>Drag & drop or click to select images</Typography>
             </Box>
             <List>
-              {images.map((file, index) => (
-                <ListItem
-                  key={index}
-                  secondaryAction={
-                    <IconButton edge="end" onClick={() => handleRemoveImage(file)}>
-                      <Icon icon="mdi:close" />
-                    </IconButton>
-                  }
-                >
-                  <img
-                    src={getImageUrl(file)}
-                    alt={file.name}
-                    width={50}
-                    height={50}
-                    style={{ marginRight: '16px', borderRadius: '4px', cursor: 'pointer' }}
-                    onClick={() => setPreviewImage(getImageUrl(file))}
-                  />
-                  <ListItemText primary={file.name || file.file_name} />
-                </ListItem>
-              ))}
+              {images &&
+                images.map((file, index) => (
+                  <ListItem
+                    key={file.id || index}
+                    secondaryAction={
+                      <IconButton edge="end" onClick={() => handleRemoveImage(file)}>
+                        <Icon icon="mdi:close" />
+                      </IconButton>
+                    }
+                  >
+                    <img
+                      src={getImageUrl(file)}
+                      alt={file.name || file.file_name}
+                      width={50}
+                      height={50}
+                      style={{
+                        marginRight: '16px',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        objectFit: 'cover',
+                      }}
+                      onClick={() => setPreviewImage(getImageUrl(file))}
+                    />
+                    <ListItemText primary={file.name || file.file_name} />
+                  </ListItem>
+                ))}
             </List>
           </CardContent>
         </Card>
@@ -125,27 +160,28 @@ export function PropertyNewEditMedia() {
           <CardContent>
             <Box {...getPdfRootProps()} component={DropZoneStyle}>
               <input {...getPdfInputProps()} />
-              <Typography>Drag & drop or click to select PDFs</Typography>
+              <Typography>Drag & drop or click to select downloads</Typography>
             </Box>
             <List>
-              {pdfs.map((file, index) => (
-                <ListItem
-                  key={index}
-                  secondaryAction={
-                    <IconButton edge="end" onClick={() => handleRemovePdf(file)}>
-                      <Icon icon="mdi:close" />
-                    </IconButton>
-                  }
-                >
-                  <Icon
-                    icon="mdi:file-pdf-box"
-                    width={40}
-                    height={40}
-                    style={{ marginRight: '16px' }}
-                  />
-                  <ListItemText primary={file.name} />
-                </ListItem>
-              ))}
+              {downloads &&
+                downloads.map((file, index) => (
+                  <ListItem
+                    key={index}
+                    secondaryAction={
+                      <IconButton edge="end" onClick={() => handleRemovePdf(file)}>
+                        <Icon icon="mdi:close" />
+                      </IconButton>
+                    }
+                  >
+                    <Icon
+                      icon="mdi:file-pdf-box"
+                      width={40}
+                      height={40}
+                      style={{ marginRight: '16px' }}
+                    />
+                    <ListItemText primary={file.name} />
+                  </ListItem>
+                ))}
             </List>
           </CardContent>
         </Card>
