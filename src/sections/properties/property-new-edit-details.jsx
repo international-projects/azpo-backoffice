@@ -45,17 +45,17 @@ export function PropertyNewEditDetails({ isMulti, options }) {
   const { control, watch, setValue } = useFormContext();
   const { locs, types, typeHouses } = options;
 
-  const locationValue = watch('locationValue');
+  const location = watch('location');
 
-  const selectedLocation = locs.find((loc) => loc.location_key === locationValue);
+  const selectedLocation = locs.find((loc) => loc.location_key === location);
   const { areas, isLoading: isLoadingAreas } = useAreas(selectedLocation?.id);
 
   useEffect(() => {
     // When location changes, reset the area value
-    if (locationValue) {
-      setValue('areaValue', '');
+    if (location) {
+      setValue('area', '');
     }
-  }, [locationValue, setValue]);
+  }, [location, setValue]);
 
   return (
     <Card>
@@ -80,16 +80,43 @@ export function PropertyNewEditDetails({ isMulti, options }) {
             {/* Price */}
             <Grid item xs={12} sm={isMulti ? 6 : 12}>
               <Controller
-                name="minPrice"
+                name="priceMin"
                 control={control}
                 render={({ field, fieldState: { error } }) => (
                   <TextField
                     {...field}
-                    type="number"
+                    type="text"
                     label={isMulti ? 'Min Price' : 'Price'}
                     fullWidth
                     error={!!error}
                     helperText={error?.message}
+                    placeholder="Enter price"
+                    onChange={(e) => {
+                      const { value } = e.target;
+                      field.onChange(value === '' ? '' : value);
+                    }}
+                  />
+                )}
+              />
+            </Grid>
+            {/* Main Price Field */}
+            <Grid item xs={12} sm={isMulti ? 6 : 12}>
+              <Controller
+                name="price"
+                control={control}
+                render={({ field, fieldState: { error } }) => (
+                  <TextField
+                    {...field}
+                    type="text"
+                    label="Price"
+                    fullWidth
+                    error={!!error}
+                    helperText={error?.message}
+                    placeholder="Enter price"
+                    onChange={(e) => {
+                      const { value } = e.target;
+                      field.onChange(value === '' ? '' : value);
+                    }}
                   />
                 )}
               />
@@ -97,7 +124,7 @@ export function PropertyNewEditDetails({ isMulti, options }) {
             {isMulti && (
               <Grid item xs={12} sm={6}>
                 <Controller
-                  name="maxPrice"
+                  name="priceMax"
                   control={control}
                   render={({ field }) => (
                     <TextField {...field} type="number" label="Max Price" fullWidth />
@@ -128,7 +155,7 @@ export function PropertyNewEditDetails({ isMulti, options }) {
             {/* Location & Area */}
             <Grid item xs={12} sm={6}>
               <Controller
-                name="locationValue"
+                name="location"
                 control={control}
                 render={({ field, fieldState: { error } }) => (
                   <TextField
@@ -150,7 +177,7 @@ export function PropertyNewEditDetails({ isMulti, options }) {
             </Grid>
             <Grid item xs={12} sm={6}>
               <Controller
-                name="areaValue"
+                name="area"
                 control={control}
                 render={({ field, fieldState: { error } }) => (
                   <TextField
@@ -158,7 +185,7 @@ export function PropertyNewEditDetails({ isMulti, options }) {
                     select
                     label="Area"
                     fullWidth
-                    disabled={!locationValue || isLoadingAreas}
+                    disabled={!location || isLoadingAreas}
                     error={!!error}
                     helperText={error?.message}
                   >
@@ -192,7 +219,7 @@ export function PropertyNewEditDetails({ isMulti, options }) {
             {isMulti && (
               <Grid item xs={12} sm={6}>
                 <Controller
-                  name="maxBaths"
+                  name="maxBath"
                   control={control}
                   render={({ field }) => (
                     <TextField {...field} type="number" label="Max Bathrooms" fullWidth />
@@ -279,7 +306,7 @@ export function PropertyNewEditDetails({ isMulti, options }) {
             {/* Floor */}
             <Grid item xs={12} sm={isMulti ? 6 : 12}>
               <Controller
-                name="floor"
+                name="buildingFloor"
                 control={control}
                 render={({ field, fieldState: { error } }) => (
                   <TextField
@@ -308,7 +335,7 @@ export function PropertyNewEditDetails({ isMulti, options }) {
             {/* Age of Building */}
             <Grid item xs={12} sm={6}>
               <Controller
-                name="ageOfBuilding"
+                name="ageOfTheBuilding"
                 control={control}
                 render={({ field, fieldState: { error } }) => (
                   <TextField
@@ -326,11 +353,16 @@ export function PropertyNewEditDetails({ isMulti, options }) {
             {/* Furnished */}
             <Grid item xs={12} sm={6}>
               <Controller
-                name="furnished"
+                name="furnishedSale"
                 control={control}
                 render={({ field }) => (
                   <FormControlLabel
-                    control={<Switch {...field} checked={field.value} />}
+                    control={
+                      <Switch
+                        checked={field.value === 1 || field.value === true}
+                        onChange={(e) => field.onChange(e.target.checked ? 1 : 0)}
+                      />
+                    }
                     label="Furnished"
                   />
                 )}
@@ -338,23 +370,28 @@ export function PropertyNewEditDetails({ isMulti, options }) {
             </Grid>
 
             {/* Distances */}
-            {['Shop', 'Airport', 'Hospital', 'Sea'].map((item) => (
-              <Grid item xs={12} sm={6} key={item}>
+            {[
+              { name: 'Shop', field: 'distToShop', typeField: 'distToShopType' },
+              { name: 'Airport', field: 'distToAirport', typeField: 'distToAirportType' },
+              { name: 'Hospital', field: 'distToHospital', typeField: 'distToHospitalType' },
+              { name: 'Sea', field: 'distToSea', typeField: 'distToSeaType' },
+            ].map((item) => (
+              <Grid item xs={12} sm={6} key={item.name}>
                 <Controller
-                  name={`dist${item}`}
+                  name={item.field}
                   control={control}
                   render={({ field, fieldState: { error } }) => (
                     <TextField
                       {...field}
                       type="number"
-                      label={`Distance to ${item}`}
+                      label={`Distance to ${item.name}`}
                       fullWidth
                       error={!!error}
                       helperText={error?.message}
                       InputProps={{
                         endAdornment: (
                           <Controller
-                            name={`${item.toLowerCase()}Type`}
+                            name={item.typeField}
                             control={control}
                             render={({ field: typeField }) => (
                               <ToggleButtonGroup {...typeField} exclusive size="small">
@@ -374,7 +411,7 @@ export function PropertyNewEditDetails({ isMulti, options }) {
             {/* Map Link */}
             <Grid item xs={12}>
               <Controller
-                name="mapLink"
+                name="locationMap"
                 control={control}
                 render={({ field, fieldState: { error } }) => (
                   <TextField
@@ -391,14 +428,14 @@ export function PropertyNewEditDetails({ isMulti, options }) {
             {/* Types & Units */}
             <Grid item xs={12} sm={6}>
               <Controller
-                name="typeValue"
+                name="typesArr"
                 control={control}
                 render={({ field, fieldState: { error } }) => {
                   const safeValue = isMulti
                     ? Array.isArray(field.value)
                       ? field.value
                       : []
-                    : field.value || '';
+                    : field.value || [];
                   return (
                     <FormControl fullWidth error={!!error}>
                       <InputLabel>Property Type</InputLabel>
@@ -436,14 +473,14 @@ export function PropertyNewEditDetails({ isMulti, options }) {
             </Grid>
             <Grid item xs={12} sm={6}>
               <Controller
-                name="typeUnit"
+                name="houseTypesArr"
                 control={control}
                 render={({ field, fieldState: { error } }) => {
                   const safeValue = isMulti
                     ? Array.isArray(field.value)
                       ? field.value
                       : []
-                    : field.value || '';
+                    : field.value || [];
                   return (
                     <FormControl fullWidth error={!!error}>
                       <InputLabel>Unit Type</InputLabel>
@@ -482,7 +519,7 @@ export function PropertyNewEditDetails({ isMulti, options }) {
           </Grid>
 
           <Controller
-            name="description"
+            name="details"
             control={control}
             render={({ field }) => (
               <ReactQuill

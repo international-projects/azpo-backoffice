@@ -57,10 +57,10 @@ export function PropertyNewEditFeatures({ options }) {
 
   return (
     <Stack spacing={3}>
-      <FeatureSection title="Tags" options={tags} fieldName="tags" />
-      <FeatureSection title="Features" options={features} fieldName="features" />
-      <FeatureSection title="Heating Types" options={heating} fieldName="heating" />
-      <FeatureSection title="Landscapes" options={landscapesData} fieldName="landscapes" />
+      <FeatureSection title="Tags" options={tags} fieldName="tagsArr" />
+      <FeatureSection title="Features" options={features} fieldName="featuresArr" />
+      <FeatureSection title="Heating Types" options={heating} fieldName="heatingTypesArr" />
+      <FeatureSection title="Landscapes" options={landscapesData} fieldName="landscapesArr" />
     </Stack>
   );
 }

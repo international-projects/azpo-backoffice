@@ -22,6 +22,8 @@ import {
   FormControlLabel,
 } from '@mui/material';
 
+import axiosInstance from 'src/utils/axios';
+
 import { STORAGE_KEY } from 'src/auth/context/jwt';
 
 import { PropertyNewEditMedia } from './property-new-edit-media';
@@ -30,7 +32,15 @@ import { PropertyNewEditDetails } from './property-new-edit-details';
 import { PropertyNewEditFeatures } from './property-new-edit-features';
 
 // API Configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'https://api.realestate.com/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000/api';
+
+// Check if environment variable is set
+if (!process.env.NEXT_PUBLIC_SERVER_URL) {
+  console.warn(
+    'NEXT_PUBLIC_SERVER_URL environment variable is not set. Using fallback URL:',
+    API_BASE_URL
+  );
+}
 
 // SWR Fetcher
 const fetcher = (url, options = {}) =>
@@ -40,59 +50,78 @@ const fetcher = (url, options = {}) =>
       ...options.headers,
     },
     ...options,
-  }).then((res) => {
+  }).then(async (res) => {
+    console.log('API Response Status:', res.status);
+    console.log('API Response Headers:', res.headers);
+
     if (!res.ok) {
-      throw new Error(`HTTP error! status: ${res.status}`);
+      // Try to get the response text to see what's being returned
+      const responseText = await res.text();
+      console.error('API Error Response Text:', responseText);
+
+      // If it's HTML, it's likely a server error page
+      if (responseText.includes('<html') || responseText.includes('<!DOCTYPE')) {
+        throw new Error(
+          `Server returned HTML error page (${res.status}). Check API endpoint and server status.`
+        );
+      }
+
+      throw new Error(
+        `HTTP error! status: ${res.status}, response: ${responseText.substring(0, 200)}`
+      );
     }
+
+    // Check if response is JSON
+    const contentType = res.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const responseText = await res.text();
+      console.error('Non-JSON Response:', responseText);
+      throw new Error(`Expected JSON response but got: ${contentType || 'unknown'}`);
+    }
+
     return res.json();
   });
 
-// Validation Schema with Zod - Simplified for testing
+// Validation Schema with Zod - Updated to match the expected field names
 const PropertySchema = z.object({
-  isMulti: z.boolean(),
+  isMulti: z.number(),
   title: z.string().min(1, 'Title is required'),
   details: z.string().optional(),
-  // Temporarily make images optional for testing
   imagesArr: z.array(z.any()).optional(),
-  downloads: z.array(z.any()).optional(),
-  baths: z.coerce.number().min(1, 'Required'),
-  maxBaths: z.coerce.number().optional(),
+  downloadsArr: z.array(z.any()).optional(),
+  baths: z.string().min(1, 'Required'),
+  maxBath: z.string().optional(),
   beds: z.string().min(1, 'Required'),
-  maxBeds: z.coerce.number().optional(),
-  sqt: z.coerce.number().min(1, 'Required'),
-  maxSqt: z.coerce.number().optional(),
-  locationValue: z.string().min(1, 'Location is required'),
-  areaValue: z.string().min(1, 'Area is required'),
-  typeValue: z
-    .union([z.array(z.number()), z.number()])
-    .refine((val) => (Array.isArray(val) ? val.length > 0 : !!val), {
-      message: 'Type is required',
-    }),
-  typeUnit: z
-    .union([z.array(z.number()), z.number()])
-    .refine((val) => (Array.isArray(val) ? val.length > 0 : !!val), {
-      message: 'Unit type is required',
-    }),
-  distShop: z.coerce.number().min(1, 'Required'),
-  shopType: z.string().min(1, 'Required'),
-  distAirport: z.coerce.number().min(1, 'Required'),
+  maxBeds: z.string().optional(),
+  sqt: z.string().min(1, 'Required'),
+  maxSqt: z.string().optional(),
+  location: z.string().min(1, 'Location is required'),
+  area: z.string().min(1, 'Area is required'),
+  distToShop: z.string().min(1, 'Required'),
+  distToShopType: z.string().nullable().optional(),
+  distToAirport: z.string().min(1, 'Required'),
   distToAirportType: z.string().min(1, 'Required'),
-  distHospital: z.coerce.number().min(1, 'Required'),
-  hospitalType: z.string().min(1, 'Required'),
-  distSea: z.coerce.number().min(1, 'Required'),
-  seaType: z.string().min(1, 'Required'),
-  mapLink: z.string().url('Must be a valid URL').optional().or(z.literal('')),
-  floor: z.coerce.number().min(0, 'Required'),
-  maxFloor: z.coerce.number().optional(),
-  ageOfBuilding: z.coerce.number().min(0, 'Required'),
-  minPrice: z.coerce.number().min(1, 'Required'),
-  maxPrice: z.coerce.number().optional(),
-  moneyType: z.enum(['dollar', 'euro', 'ruble']),
-  furnished: z.boolean(),
-  tags: z.array(z.number()).optional(),
-  features: z.array(z.number()).optional(),
-  heating: z.array(z.number()).optional(),
-  landscapes: z.array(z.number()).optional(),
+  distToHospital: z.string().min(1, 'Required'),
+  distToHospitalType: z.string().min(1, 'Required'),
+  distToSea: z.string().min(1, 'Required'),
+  distToSeaType: z.string().min(1, 'Required'),
+  locationMap: z.string().min(1, 'Required'),
+  buildingFloor: z.string().min(1, 'Required'),
+  maxFloor: z.string().optional(),
+  ageOfTheBuilding: z.string().min(1, 'Required'),
+  price: z.string().min(1, 'Required'),
+  priceMin: z.string().min(1, 'Required'),
+  priceMax: z.string().nullable().optional(),
+  moneyType: z.enum(['dollar', 'euro', 'ruble']).optional(),
+  furnishedSale: z.union([z.number(), z.boolean()]).optional(),
+  tagsArr: z.array(z.number()).optional(),
+  featuresArr: z.array(z.number()).optional(),
+  heatingTypesArr: z.array(z.number()).optional(),
+  landscapesArr: z.array(z.number()).optional(),
+  download: z.string().optional(),
+
+  typesArr: z.union([z.array(z.number()), z.number()]).optional(),
+  houseTypesArr: z.union([z.array(z.number()), z.number()]).optional(),
 });
 
 export function PropertyNewEditForm({ currentProperty, options }) {
@@ -114,45 +143,43 @@ export function PropertyNewEditForm({ currentProperty, options }) {
   }, [currentProperty?.id]);
   const defaultValues = useMemo(
     () => ({
-      isMulti: currentProperty?.is_multi === 1 || false,
+      isMulti: currentProperty?.is_multi || 0,
       title: currentProperty?.title || '',
       details: currentProperty?.details || '',
       imagesArr: currentProperty?.images || [],
-      downloads: currentProperty?.dowloads || [],
-      baths: currentProperty?.bathroom || 1,
-      maxBaths: currentProperty?.max_bath || undefined,
+      downloadsArr: currentProperty?.dowloads || [],
+      baths: currentProperty?.bathroom?.toString() || '1',
+      maxBath: currentProperty?.max_bath?.toString() || '',
       beds: currentProperty?.bed_room || '',
-      maxBeds: currentProperty?.max_bed || undefined,
-      sqt: currentProperty?.metrage || 0,
-      maxSqt: currentProperty?.max_sqt || undefined,
-      locationValue: currentProperty?.location || '',
-      areaValue: currentProperty?.area || '',
-      typeValue: currentProperty?.is_multi
-        ? currentProperty?.types?.map((t) => t.id) || []
-        : currentProperty?.types?.[0]?.id || '',
-      typeUnit: currentProperty?.is_multi
-        ? currentProperty?.houseTypes?.map((ht) => ht.id) || []
-        : currentProperty?.houseTypes?.[0]?.id || '',
-      distShop: currentProperty?.dist_shopping || 0,
-      shopType: currentProperty?.dist_shopping_type || 'm',
-      distAirport: currentProperty?.dist_airport || 0,
+      maxBeds: currentProperty?.max_bed?.toString() || '',
+      sqt: currentProperty?.metrage?.toString() || '0',
+      maxSqt: currentProperty?.max_sqt?.toString() || '',
+      location: currentProperty?.location || '',
+      area: currentProperty?.area || '',
+      typesArr: currentProperty?.types?.map((t) => t.id) || [],
+      houseTypesArr: currentProperty?.houseTypes?.map((ht) => ht.id) || [],
+      distToShop: currentProperty?.dist_shopping?.toString() || '0',
+      distToShopType: currentProperty?.dist_shopping_type || 'm',
+      distToAirport: currentProperty?.dist_airport?.toString() || '0',
       distToAirportType: currentProperty?.dist_airport_type || 'km',
-      distHospital: currentProperty?.dist_hospital || 0,
-      hospitalType: currentProperty?.dist_hospital_type || 'm',
-      distSea: currentProperty?.dist_sea || 0,
-      seaType: currentProperty?.dist_sea_type || 'm',
-      mapLink: currentProperty?.location_map || '',
-      floor: currentProperty?.building_floor || 0,
-      maxFloor: currentProperty?.max_floor || undefined,
-      ageOfBuilding: currentProperty?.age_of_the_building || 0,
-      minPrice: currentProperty?.price_min || 0,
-      maxPrice: currentProperty?.price_max || undefined,
+      distToHospital: currentProperty?.dist_hospital?.toString() || '0',
+      distToHospitalType: currentProperty?.dist_hospital_type || 'm',
+      distToSea: currentProperty?.dist_sea?.toString() || '0',
+      distToSeaType: currentProperty?.dist_sea_type || 'm',
+      locationMap: currentProperty?.location_map || '',
+      buildingFloor: currentProperty?.building_floor?.toString() || '0',
+      maxFloor: currentProperty?.max_floor?.toString() || '',
+      ageOfTheBuilding: currentProperty?.age_of_the_building?.toString() || '0',
+      price: currentProperty?.price_min?.toString() || '0',
+      priceMin: currentProperty?.price_min?.toString() || '0',
+      priceMax: currentProperty?.price_max?.toString() || '',
       moneyType: currentProperty?.money_type || 'dollar',
-      furnished: currentProperty?.furnished_sale === 1 || false,
-      tags: currentProperty?.tags?.map((t) => t.id) || [],
-      features: currentProperty?.features?.map((f) => f.id) || [],
-      heating: currentProperty?.heatingTypes?.map((h) => h.id) || [],
-      landscapes: currentProperty?.landscapes?.map((l) => l.id) || [],
+      furnishedSale: currentProperty?.furnished_sale || 0,
+      tagsArr: currentProperty?.tags?.map((t) => t.id) || [],
+      featuresArr: currentProperty?.features?.map((f) => f.id) || [],
+      heatingTypesArr: currentProperty?.heatingTypes?.map((h) => h.id) || [],
+      landscapesArr: currentProperty?.landscapes?.map((l) => l.id) || [],
+      download: currentProperty?.download || '',
     }),
     [currentProperty]
   );
@@ -161,7 +188,11 @@ export function PropertyNewEditForm({ currentProperty, options }) {
   const methods = useForm({
     resolver: zodResolver(PropertySchema),
     defaultValues,
+    mode: 'onChange', // Enable real-time validation
   });
+
+  console.log('Form methods initialized:', methods);
+  console.log('Default values:', defaultValues);
   // Check for unsaved changes
   const hasUnsavedChanges = methods.formState.isDirty;
 
@@ -223,7 +254,7 @@ export function PropertyNewEditForm({ currentProperty, options }) {
     formState: { errors },
   } = methods;
 
-  const isMultiValue = watch('isMulti');
+  const isMultiValue = watch('isMulti') === 1;
 
   const onSubmit = handleSubmit(async (data) => {
     try {
@@ -231,53 +262,30 @@ export function PropertyNewEditForm({ currentProperty, options }) {
       setSubmitError(null);
       console.log('Form submission started');
       console.log('Raw Form Data:', data);
+      console.log('Form validation errors:', methods.formState.errors);
+      console.log('Form is valid:', methods.formState.isValid);
+      console.log('Form is dirty:', methods.formState.isDirty);
+      console.log('Form is touched:', methods.formState.isTouched);
 
       // Validate that we have the required data
-      if (!data.title || !data.locationValue || !data.areaValue) {
+      if (!data.title || !data.location || !data.area) {
         throw new Error('Please fill in all required fields');
       }
 
       console.log('Basic validation passed');
-
       // Format the data for API submission
       const formattedData = {
         ...data,
-        // Convert boolean values to integers if needed by your API
-        is_multi: data.isMulti ? 1 : 0,
-        furnished_sale: data.furnished ? 1 : 0,
-        // Ensure arrays are properly formatted
-        types: Array.isArray(data.typeValue) ? data.typeValue : [data.typeValue],
-        houseTypes: Array.isArray(data.typeUnit) ? data.typeUnit : [data.typeUnit],
-        // Convert string numbers to actual numbers where needed
-        bathroom: Number(data.baths),
-        max_bath: data.maxBaths ? Number(data.maxBaths) : null,
-        bed_room: data.beds,
-        max_bed: data.maxBeds ? Number(data.maxBeds) : null,
-        metrage: Number(data.sqt),
-        max_sqt: data.maxSqt ? Number(data.maxSqt) : null,
-        // Distance fields
-        dist_shopping: Number(data.distShop),
-        dist_shopping_type: data.shopType,
-        dist_airport: Number(data.distAirport),
-        dist_airport_type: data.distToAirportType,
-        dist_hospital: Number(data.distHospital),
-        dist_hospital_type: data.hospitalType,
-        dist_sea: Number(data.distSea),
-        dist_sea_type: data.seaType,
-        // Building details
-        building_floor: Number(data.floor),
-        max_floor: data.maxFloor ? Number(data.maxFloor) : null,
-        // Pricing
-        price_min: Number(data.minPrice),
-        price_max: data.maxPrice ? Number(data.maxPrice) : null,
-        // Arrays
-        tags: data.tags || [],
-        features: data.features || [],
-        heatingTypes: data.heating || [],
-        landscapes: data.landscapes || [],
+        typesArr: Array.isArray(data.typesArr) ? data.typesArr : [data.typesArr],
+        houseTypesArr: Array.isArray(data.houseTypesArr)
+          ? data.houseTypesArr
+          : [data.houseTypesArr],
       };
+      formattedData.price = '11111';
 
       console.log('Formatted Data for API:', formattedData);
+      console.log('Furnished sale value:', data.furnishedSale, 'Type:', typeof data.furnishedSale);
+      console.log('Formatted furnished_sale:', formattedData.furnished_sale);
 
       // Determine if this is a create or update operation
       const isEdit = !!currentProperty;
@@ -287,15 +295,44 @@ export function PropertyNewEditForm({ currentProperty, options }) {
 
       const method = isEdit ? 'PATCH' : 'POST';
 
+      console.log('API Configuration:');
+      console.log('API_BASE_URL:', API_BASE_URL);
+      console.log('Environment variable:', process.env.NEXT_PUBLIC_SERVER_URL);
+      console.log('Full URL:', url);
+      console.log('Method:', method);
+      console.log('Is Edit:', isEdit);
+
       // Make the API call
-      const response = await fetcher(url, {
-        method,
-        body: JSON.stringify(formattedData),
-        // send token
-        headers: {
-          Authorization: `Bearer ${sessionStorage.getItem(STORAGE_KEY)}`,
-        },
-      });
+      console.log('Making API call to:', url);
+      console.log('Method:', method);
+      console.log('Formatted data:', formattedData);
+
+      const token = sessionStorage.getItem(STORAGE_KEY);
+      console.log(
+        'Authentication Token:',
+        token ? `${token.substring(0, 20)}...` : 'No token found'
+      );
+
+      // Check if URL is valid
+      if (!url || url.includes('undefined') || url.includes('null')) {
+        throw new Error(`Invalid API URL: ${url}`);
+      }
+
+      let response = null;
+      // check is edit or create
+      if (isEdit) {
+        response = await axiosInstance.patch(url, formattedData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      } else {
+        response = await axiosInstance.post(url, formattedData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      }
 
       console.log('API Response:', response);
 
@@ -306,7 +343,7 @@ export function PropertyNewEditForm({ currentProperty, options }) {
 
         // If editing, also update the current property data
         if (isEdit) {
-          await mutate(`${API_BASE_URL}/dashboard/update/${currentProperty.id}/en`);
+          await mutate(`${API_BASE_URL}/dashboard/properties/${currentProperty.id}`);
         }
 
         setSubmitSuccess(true);
@@ -324,6 +361,11 @@ export function PropertyNewEditForm({ currentProperty, options }) {
       }
     } catch (error) {
       console.error('Error saving property:', error);
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+      });
       setSubmitError(error.message);
     } finally {
       setIsSubmitting(false);
@@ -335,9 +377,14 @@ export function PropertyNewEditForm({ currentProperty, options }) {
     console.log('Form methods:', methods);
     console.log('Form values:', methods.getValues());
     console.log('Form errors:', methods.formState.errors);
+    console.log('Form is valid:', methods.formState.isValid);
+    console.log('Form is dirty:', methods.formState.isDirty);
     console.log('Current property:', currentProperty);
     console.log('Options:', options);
   }, [methods, currentProperty, options]);
+
+  console.log('Rendering form with methods:', methods);
+  console.log('Form state:', methods.formState);
 
   return (
     <FormProvider {...methods}>
@@ -360,14 +407,24 @@ export function PropertyNewEditForm({ currentProperty, options }) {
           </Alert>
         )}
 
-        <form onSubmit={onSubmit}>
+        <form
+          onSubmit={(e) => {
+            console.log('Form onSubmit triggered');
+            console.log('Event:', e);
+            console.log('Form methods available:', !!methods);
+            console.log('Form state before submit:', methods.formState);
+            console.log('Form validation errors before submit:', methods.formState.errors);
+            console.log('Form is valid before submit:', methods.formState.isValid);
+            onSubmit(e);
+          }}
+        >
           <Grid container spacing={3}>
             <Grid item xs={12}>
               <FormControlLabel
                 control={
                   <Switch
                     checked={isMultiValue}
-                    onChange={(e) => setValue('isMulti', e.target.checked)} // Use setValue directly
+                    onChange={(e) => setValue('isMulti', e.target.checked ? 1 : 0)} // Use setValue directly
                     disabled={!!currentProperty} // Disable if editing
                   />
                 }
@@ -395,7 +452,34 @@ export function PropertyNewEditForm({ currentProperty, options }) {
             >
               Cancel
             </Button>
-            <Button type="submit" variant="contained" disabled={isSubmitting}>
+            <Button
+              variant="outlined"
+              onClick={() => {
+                console.log('Test button clicked');
+                const formData = methods.getValues();
+                console.log('Current form data:', formData);
+                console.log('Form errors:', methods.formState.errors);
+                console.log('Form is valid:', methods.formState.isValid);
+                console.log('Form is dirty:', methods.formState.isDirty);
+              }}
+            >
+              Debug Form
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={isSubmitting}
+              onClick={() => {
+                console.log('Submit button clicked');
+                console.log('Form state:', methods.formState);
+                console.log('Form values:', methods.getValues());
+                console.log('Form errors:', methods.formState.errors);
+                console.log('Form is valid:', methods.formState.isValid);
+                console.log('Form is dirty:', methods.formState.isDirty);
+                console.log('Form is submitting:', isSubmitting);
+                console.log('Form can submit:', methods.formState.isValid && !isSubmitting);
+              }}
+            >
               {isSubmitting
                 ? currentProperty
                   ? 'Saving...'

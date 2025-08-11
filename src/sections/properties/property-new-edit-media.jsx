@@ -33,7 +33,7 @@ const DropZoneStyle = styled('div')(({ theme }) => ({
 export function PropertyNewEditMedia() {
   const { setValue, getValues, watch } = useFormContext();
   const images = watch('imagesArr');
-  const downloads = watch('downloads');
+  const downloads = watch('downloadsArr');
   const [previewImage, setPreviewImage] = useState(null);
 
   const getImageUrl = (file) => {
@@ -59,7 +59,7 @@ export function PropertyNewEditMedia() {
   const handleRemovePdf = (fileToRemove) => {
     setValue(
       'downloadsArr',
-      getValues().downloads.filter((file) => file.name !== fileToRemove.name)
+      getValues().downloadsArr.filter((file) => file.name !== fileToRemove.name)
     );
   };
 
@@ -87,7 +87,7 @@ export function PropertyNewEditMedia() {
 
   const handleDropdownloads = useCallback(
     (acceptedFiles) => {
-      const currentdownloads = getValues().downloads || [];
+      const currentdownloads = getValues().downloadsArr || [];
       acceptedFiles.forEach((file) => {
         const reader = new FileReader();
         reader.onload = () => {
@@ -97,7 +97,7 @@ export function PropertyNewEditMedia() {
               name: file.name,
               order: currentdownloads.length + 1,
             };
-            setValue('downloads', [...getValues().downloads, newPdf]);
+            setValue('downloadsArr', [...getValues().downloadsArr, newPdf]);
           }
         };
         reader.readAsDataURL(file);
