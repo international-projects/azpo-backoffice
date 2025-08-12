@@ -1,5 +1,4 @@
 import * as z from 'zod';
-import { mutate } from 'swr';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState, useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -42,46 +41,6 @@ if (!process.env.NEXT_PUBLIC_SERVER_URL) {
   );
 }
 
-// SWR Fetcher
-const fetcher = (url, options = {}) =>
-  fetch(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-    ...options,
-  }).then(async (res) => {
-    console.log('API Response Status:', res.status);
-    console.log('API Response Headers:', res.headers);
-
-    if (!res.ok) {
-      // Try to get the response text to see what's being returned
-      const responseText = await res.text();
-      console.error('API Error Response Text:', responseText);
-
-      // If it's HTML, it's likely a server error page
-      if (responseText.includes('<html') || responseText.includes('<!DOCTYPE')) {
-        throw new Error(
-          `Server returned HTML error page (${res.status}). Check API endpoint and server status.`
-        );
-      }
-
-      throw new Error(
-        `HTTP error! status: ${res.status}, response: ${responseText.substring(0, 200)}`
-      );
-    }
-
-    // Check if response is JSON
-    const contentType = res.headers.get('content-type');
-    if (!contentType || !contentType.includes('application/json')) {
-      const responseText = await res.text();
-      console.error('Non-JSON Response:', responseText);
-      throw new Error(`Expected JSON response but got: ${contentType || 'unknown'}`);
-    }
-
-    return res.json();
-  });
-
 // Validation Schema with Zod - Updated to match the expected field names
 const PropertySchema = z.object({
   isMulti: z.number(),
@@ -119,7 +78,8 @@ const PropertySchema = z.object({
   heatingTypesArr: z.array(z.number()).optional(),
   landscapesArr: z.array(z.number()).optional(),
   download: z.string().optional(),
-
+  newImagesArr: z.array(z.any()).optional(),
+  deletedImagesArr: z.array(z.any()).optional(),
   typesArr: z.union([z.array(z.number()), z.number()]).optional(),
   houseTypesArr: z.union([z.array(z.number()), z.number()]).optional(),
 });
@@ -180,6 +140,8 @@ export function PropertyNewEditForm({ currentProperty, options }) {
       heatingTypesArr: currentProperty?.heatingTypes?.map((h) => h.id) || [],
       landscapesArr: currentProperty?.landscapes?.map((l) => l.id) || [],
       download: currentProperty?.download || '',
+      newImagesArr: [],
+      deletedImagesArr: [],
     }),
     [currentProperty]
   );
@@ -191,8 +153,6 @@ export function PropertyNewEditForm({ currentProperty, options }) {
     mode: 'onChange', // Enable real-time validation
   });
 
-  console.log('Form methods initialized:', methods);
-  console.log('Default values:', defaultValues);
   // Check for unsaved changes
   const hasUnsavedChanges = methods.formState.isDirty;
 
@@ -260,32 +220,47 @@ export function PropertyNewEditForm({ currentProperty, options }) {
     try {
       setIsSubmitting(true);
       setSubmitError(null);
-      console.log('Form submission started');
-      console.log('Raw Form Data:', data);
-      console.log('Form validation errors:', methods.formState.errors);
-      console.log('Form is valid:', methods.formState.isValid);
-      console.log('Form is dirty:', methods.formState.isDirty);
-      console.log('Form is touched:', methods.formState.isTouched);
 
-      // Validate that we have the required data
-      if (!data.title || !data.location || !data.area) {
-        throw new Error('Please fill in all required fields');
-      }
-
-      console.log('Basic validation passed');
       // Format the data for API submission
       const formattedData = {
-        ...data,
+        title: data.title,
+        price: data.priceMin, // BUG FIX 1: Set price from priceMin
+        priceMax: data.priceMax ? data.priceMax : null,
+        priceMin: data.priceMin,
+        location: data.location,
+        area: data.area,
+        baths: data.baths,
+        beds: data.beds,
+        sqt: data.sqt,
+        distToShop: data.distToShop,
+        distToAirport: data.distToAirport,
+        distToHospital: data.distToHospital,
         typesArr: Array.isArray(data.typesArr) ? data.typesArr : [data.typesArr],
+        details: data.details,
+        tagsArr: data.tagsArr || [],
+        featuresArr: data.featuresArr || [],
+        locationMap: data.locationMap,
+        moneyType: data.moneyType,
+        buildingFloor: data.buildingFloor,
+        ageOfTheBuilding: data.ageOfTheBuilding,
+        furnishedSale: data.furnishedSale ? 1 : 0,
+        distToSea: data.distToSea,
+        landscapesArr: data.landscapesArr || [],
+        heatingTypesArr: data.heatingTypesArr || [],
         houseTypesArr: Array.isArray(data.houseTypesArr)
           ? data.houseTypesArr
           : [data.houseTypesArr],
+        distToShopType: data.distToShopType,
+        distToAirportType: data.distToAirportType,
+        distToHospitalType: data.distToHospitalType,
+        distToSeaType: data.distToSeaType,
+        downloadsArr: data.downloadsArr,
+        isMulti: data.isMulti,
+        maxBath: data.maxBath,
+        maxBed: data.maxBeds,
+        maxSqt: data.maxSqt,
+        maxFloor: data.maxFloor,
       };
-      formattedData.price = '11111';
-
-      console.log('Formatted Data for API:', formattedData);
-      console.log('Furnished sale value:', data.furnishedSale, 'Type:', typeof data.furnishedSale);
-      console.log('Formatted furnished_sale:', formattedData.furnished_sale);
 
       // Determine if this is a create or update operation
       const isEdit = !!currentProperty;
@@ -293,29 +268,14 @@ export function PropertyNewEditForm({ currentProperty, options }) {
         ? `${API_BASE_URL}/dashboard/update/${currentProperty.id}/en`
         : `${API_BASE_URL}/dashboard/create/en`;
 
-      const method = isEdit ? 'PATCH' : 'POST';
-
-      console.log('API Configuration:');
-      console.log('API_BASE_URL:', API_BASE_URL);
-      console.log('Environment variable:', process.env.NEXT_PUBLIC_SERVER_URL);
-      console.log('Full URL:', url);
-      console.log('Method:', method);
-      console.log('Is Edit:', isEdit);
-
-      // Make the API call
-      console.log('Making API call to:', url);
-      console.log('Method:', method);
-      console.log('Formatted data:', formattedData);
-
       const token = sessionStorage.getItem(STORAGE_KEY);
-      console.log(
-        'Authentication Token:',
-        token ? `${token.substring(0, 20)}...` : 'No token found'
-      );
 
-      // Check if URL is valid
-      if (!url || url.includes('undefined') || url.includes('null')) {
-        throw new Error(`Invalid API URL: ${url}`);
+      if (isEdit) {
+        formattedData.newImagesArr = data.imagesArr.filter((img) => img.image);
+        formattedData.deletedImagesArr = data.deletedImagesArr;
+        delete formattedData.imagesArr;
+      } else {
+        formattedData.imagesArr = data.imagesArr;
       }
 
       let response = null;
@@ -334,57 +294,16 @@ export function PropertyNewEditForm({ currentProperty, options }) {
         });
       }
 
-      console.log('API Response:', response);
-
-      // Optimistically update the properties list
-      if (response.success) {
-        // Invalidate and revalidate the properties list
-        await mutate(propertiesKey);
-
-        // If editing, also update the current property data
-        if (isEdit) {
-          await mutate(`${API_BASE_URL}/dashboard/properties/${currentProperty.id}`);
-        }
-
-        setSubmitSuccess(true);
-        console.log('Property saved successfully!');
-
-        // Reset form dirty state
-        methods.reset(formattedData);
-
-        // Redirect to properties list after a short delay
-        setTimeout(() => {
-          router.push('/dashboard/properties');
-        }, 1500);
-      } else {
-        throw new Error(response.message || 'Failed to save property');
-      }
+      setTimeout(() => {
+        router.push('/dashboard/properties');
+      }, 1500);
     } catch (error) {
       console.error('Error saving property:', error);
-      console.error('Error details:', {
-        message: error.message,
-        stack: error.stack,
-        name: error.name,
-      });
       setSubmitError(error.message);
     } finally {
       setIsSubmitting(false);
     }
   });
-
-  useEffect(() => {
-    console.log('PropertyNewEditForm rendered');
-    console.log('Form methods:', methods);
-    console.log('Form values:', methods.getValues());
-    console.log('Form errors:', methods.formState.errors);
-    console.log('Form is valid:', methods.formState.isValid);
-    console.log('Form is dirty:', methods.formState.isDirty);
-    console.log('Current property:', currentProperty);
-    console.log('Options:', options);
-  }, [methods, currentProperty, options]);
-
-  console.log('Rendering form with methods:', methods);
-  console.log('Form state:', methods.formState);
 
   return (
     <FormProvider {...methods}>
@@ -393,39 +312,27 @@ export function PropertyNewEditForm({ currentProperty, options }) {
           {currentProperty ? 'Edit Property' : 'Add New Property'}
         </Typography>
 
-        {/* Error Alert */}
         {submitError && (
           <Alert severity="error" sx={{ mb: 3 }} onClose={() => setSubmitError(null)}>
             {submitError}
           </Alert>
         )}
 
-        {/* Success Alert */}
         {submitSuccess && (
           <Alert severity="success" sx={{ mb: 3 }}>
             Property saved successfully! Redirecting...
           </Alert>
         )}
 
-        <form
-          onSubmit={(e) => {
-            console.log('Form onSubmit triggered');
-            console.log('Event:', e);
-            console.log('Form methods available:', !!methods);
-            console.log('Form state before submit:', methods.formState);
-            console.log('Form validation errors before submit:', methods.formState.errors);
-            console.log('Form is valid before submit:', methods.formState.isValid);
-            onSubmit(e);
-          }}
-        >
+        <form onSubmit={onSubmit}>
           <Grid container spacing={3}>
             <Grid item xs={12}>
               <FormControlLabel
                 control={
                   <Switch
                     checked={isMultiValue}
-                    onChange={(e) => setValue('isMulti', e.target.checked ? 1 : 0)} // Use setValue directly
-                    disabled={!!currentProperty} // Disable if editing
+                    onChange={(e) => setValue('isMulti', e.target.checked ? 1 : 0)}
+                    disabled={!!currentProperty}
                   />
                 }
                 label="Is this a project (multiple units)?"
@@ -433,10 +340,10 @@ export function PropertyNewEditForm({ currentProperty, options }) {
             </Grid>
             <Grid item xs={12} md={8}>
               <PropertyNewEditDetails isMulti={isMultiValue} options={options} />
-              <PropertyNewEditMedia />
             </Grid>
             <Grid item xs={12} md={4}>
               <Stack spacing={3}>
+                <PropertyNewEditMedia />
                 <PropertyNewEditFeatures options={options} />
               </Stack>
             </Grid>
@@ -452,34 +359,7 @@ export function PropertyNewEditForm({ currentProperty, options }) {
             >
               Cancel
             </Button>
-            <Button
-              variant="outlined"
-              onClick={() => {
-                console.log('Test button clicked');
-                const formData = methods.getValues();
-                console.log('Current form data:', formData);
-                console.log('Form errors:', methods.formState.errors);
-                console.log('Form is valid:', methods.formState.isValid);
-                console.log('Form is dirty:', methods.formState.isDirty);
-              }}
-            >
-              Debug Form
-            </Button>
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={isSubmitting}
-              onClick={() => {
-                console.log('Submit button clicked');
-                console.log('Form state:', methods.formState);
-                console.log('Form values:', methods.getValues());
-                console.log('Form errors:', methods.formState.errors);
-                console.log('Form is valid:', methods.formState.isValid);
-                console.log('Form is dirty:', methods.formState.isDirty);
-                console.log('Form is submitting:', isSubmitting);
-                console.log('Form can submit:', methods.formState.isValid && !isSubmitting);
-              }}
-            >
+            <Button type="submit" variant="contained" disabled={isSubmitting}>
               {isSubmitting
                 ? currentProperty
                   ? 'Saving...'
@@ -492,14 +372,13 @@ export function PropertyNewEditForm({ currentProperty, options }) {
         </form>
       </Container>
 
-      {/* Unsaved Changes Confirmation Dialog */}
       <Dialog open={showUnsavedDialog} onClose={cancelNavigation}>
         <DialogTitle>Unsaved Changes</DialogTitle>
         <DialogContent>
           <Typography>
             {pendingNavigation === 'reset'
-              ? 'You have unsaved changes. Are you sure you want to reset the form? All unsaved changes will be lost.'
-              : 'You have unsaved changes. Are you sure you want to leave? All unsaved changes will be lost.'}
+              ? 'You have unsaved changes. Are you sure you want to reset the form?'
+              : 'You have unsaved changes. Are you sure you want to leave?'}
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -511,7 +390,7 @@ export function PropertyNewEditForm({ currentProperty, options }) {
             color="error"
             variant="contained"
           >
-            {pendingNavigation === 'reset' ? 'Reset Form' : 'Leave Without Saving'}
+            {pendingNavigation === 'reset' ? 'Reset Form' : 'Leave'}
           </Button>
         </DialogActions>
       </Dialog>

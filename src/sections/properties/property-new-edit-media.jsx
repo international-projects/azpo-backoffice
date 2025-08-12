@@ -49,10 +49,20 @@ export function PropertyNewEditMedia() {
   };
 
   const handleRemoveImage = (fileToRemove) => {
-    const identifier = fileToRemove.id || fileToRemove.name;
+    // If it's an existing image from the server (it has a file_name)
+    if (fileToRemove.file_name) {
+      const currentDeleted = getValues().deletedImagesArr || [];
+      setValue('deletedImagesArr', [
+        ...currentDeleted,
+        { id: fileToRemove.id, name: fileToRemove.file_name },
+      ]);
+    }
+    // Remove from the displayed list
     setValue(
       'imagesArr',
-      getValues().imagesArr.filter((file) => (file.id || file.name) !== identifier)
+      getValues().imagesArr.filter(
+        (file) => (file.id || file.name) !== (fileToRemove.id || fileToRemove.name)
+      )
     );
   };
 

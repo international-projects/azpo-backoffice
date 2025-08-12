@@ -1,9 +1,9 @@
 import 'react-quill/dist/quill.snow.css';
 
 import useSWR from 'swr';
-import { useEffect } from 'react';
 import ReactQuill from 'react-quill';
 import { Icon } from '@iconify/react';
+import { useRef, useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 // MUI Components
@@ -45,17 +45,22 @@ export function PropertyNewEditDetails({ isMulti, options }) {
   const { control, watch, setValue } = useFormContext();
   const { locs, types, typeHouses } = options;
 
-  const location = watch('location');
+  const locationValue = watch('location');
 
-  const selectedLocation = locs.find((loc) => loc.location_key === location);
+  const selectedLocation = locs.find((loc) => loc.location_key === locationValue);
   const { areas, isLoading: isLoadingAreas } = useAreas(selectedLocation?.id);
+  const isInitialMount = useRef(true);
 
   useEffect(() => {
-    // When location changes, reset the area value
-    if (location) {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    if (locationValue) {
       setValue('area', '');
     }
-  }, [location, setValue]);
+  }, [locationValue, setValue]);
 
   return (
     <Card>
@@ -85,38 +90,11 @@ export function PropertyNewEditDetails({ isMulti, options }) {
                 render={({ field, fieldState: { error } }) => (
                   <TextField
                     {...field}
-                    type="text"
+                    type="number"
                     label={isMulti ? 'Min Price' : 'Price'}
                     fullWidth
                     error={!!error}
                     helperText={error?.message}
-                    placeholder="Enter price"
-                    onChange={(e) => {
-                      const { value } = e.target;
-                      field.onChange(value === '' ? '' : value);
-                    }}
-                  />
-                )}
-              />
-            </Grid>
-            {/* Main Price Field */}
-            <Grid item xs={12} sm={isMulti ? 6 : 12}>
-              <Controller
-                name="price"
-                control={control}
-                render={({ field, fieldState: { error } }) => (
-                  <TextField
-                    {...field}
-                    type="text"
-                    label="Price"
-                    fullWidth
-                    error={!!error}
-                    helperText={error?.message}
-                    placeholder="Enter price"
-                    onChange={(e) => {
-                      const { value } = e.target;
-                      field.onChange(value === '' ? '' : value);
-                    }}
                   />
                 )}
               />
@@ -185,7 +163,7 @@ export function PropertyNewEditDetails({ isMulti, options }) {
                     select
                     label="Area"
                     fullWidth
-                    disabled={!location || isLoadingAreas}
+                    disabled={!locationValue || isLoadingAreas}
                     error={!!error}
                     helperText={error?.message}
                   >
@@ -359,7 +337,8 @@ export function PropertyNewEditDetails({ isMulti, options }) {
                   <FormControlLabel
                     control={
                       <Switch
-                        checked={field.value === 1 || field.value === true}
+                        {...field}
+                        checked={field.value === 1}
                         onChange={(e) => field.onChange(e.target.checked ? 1 : 0)}
                       />
                     }
@@ -370,28 +349,23 @@ export function PropertyNewEditDetails({ isMulti, options }) {
             </Grid>
 
             {/* Distances */}
-            {[
-              { name: 'Shop', field: 'distToShop', typeField: 'distToShopType' },
-              { name: 'Airport', field: 'distToAirport', typeField: 'distToAirportType' },
-              { name: 'Hospital', field: 'distToHospital', typeField: 'distToHospitalType' },
-              { name: 'Sea', field: 'distToSea', typeField: 'distToSeaType' },
-            ].map((item) => (
-              <Grid item xs={12} sm={6} key={item.name}>
+            {['Shop', 'Airport', 'Hospital', 'Sea'].map((item) => (
+              <Grid item xs={12} sm={6} key={item}>
                 <Controller
-                  name={item.field}
+                  name={`distTo${item}`}
                   control={control}
                   render={({ field, fieldState: { error } }) => (
                     <TextField
                       {...field}
                       type="number"
-                      label={`Distance to ${item.name}`}
+                      label={`Distance to ${item}`}
                       fullWidth
                       error={!!error}
                       helperText={error?.message}
                       InputProps={{
                         endAdornment: (
                           <Controller
-                            name={item.typeField}
+                            name={`distTo${item}Type`}
                             control={control}
                             render={({ field: typeField }) => (
                               <ToggleButtonGroup {...typeField} exclusive size="small">
@@ -435,7 +409,7 @@ export function PropertyNewEditDetails({ isMulti, options }) {
                     ? Array.isArray(field.value)
                       ? field.value
                       : []
-                    : field.value || [];
+                    : field.value || '';
                   return (
                     <FormControl fullWidth error={!!error}>
                       <InputLabel>Property Type</InputLabel>
@@ -480,7 +454,7 @@ export function PropertyNewEditDetails({ isMulti, options }) {
                     ? Array.isArray(field.value)
                       ? field.value
                       : []
-                    : field.value || [];
+                    : field.value || '';
                   return (
                     <FormControl fullWidth error={!!error}>
                       <InputLabel>Unit Type</InputLabel>
