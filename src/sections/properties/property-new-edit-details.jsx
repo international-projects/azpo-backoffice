@@ -41,7 +41,7 @@ function useAreas(locationId) {
   };
 }
 
-export function PropertyNewEditDetails({ isMulti, options }) {
+export function PropertyNewEditDetails({ isMulti, options, currentProperty }) {
   const { control, watch, setValue } = useFormContext();
   const { locs, types, typeHouses } = options;
 
@@ -61,6 +61,12 @@ export function PropertyNewEditDetails({ isMulti, options }) {
       setValue('area', '');
     }
   }, [locationValue, setValue]);
+  // if edit mode, set area to the area of the property
+  useEffect(() => {
+    if (currentProperty) {
+      setValue('area', currentProperty.area);
+    }
+  }, [currentProperty, setValue]);
 
   return (
     <Card>
