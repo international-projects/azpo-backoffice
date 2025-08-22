@@ -340,26 +340,27 @@ export function PropertyNewEditForm({ currentProperty, options }) {
             </Grid>
             <Grid item xs={12} md={8}>
               <PropertyNewEditDetails isMulti={isMultiValue} options={options} />
+              <PropertyNewEditMedia />
             </Grid>
             <Grid item xs={12} md={4}>
               <Stack spacing={3}>
-                <PropertyNewEditMedia />
                 <PropertyNewEditFeatures options={options} />
               </Stack>
             </Grid>
           </Grid>
-          <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+          <Box sx={{ mt: 5, mb: 5, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
             <Button variant="outlined" onClick={handleReset} disabled={isSubmitting}>
               Reset
             </Button>
             <Button
+              size="large"
               variant="outlined"
               onClick={() => handleNavigation('/dashboard/properties')}
               disabled={isSubmitting}
             >
               Cancel
             </Button>
-            <Button type="submit" variant="contained" disabled={isSubmitting}>
+            <Button type="submit" variant="contained" size="large" disabled={isSubmitting}>
               {isSubmitting
                 ? currentProperty
                   ? 'Saving...'
