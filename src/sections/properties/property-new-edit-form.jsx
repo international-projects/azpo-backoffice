@@ -180,18 +180,27 @@ export function PropertyNewEditForm({
 
   // Handle navigation with unsaved changes
   const handleNavigation = (path) => {
+    // Preserve locale when navigating back to properties list
+    const finalPath =
+      path === '/dashboard/properties' ? `/dashboard/properties?locale=${locale}` : path;
+
     if (hasUnsavedChanges && !submitSuccess) {
-      setPendingNavigation(path);
+      setPendingNavigation(finalPath);
       setShowUnsavedDialog(true);
     } else {
-      router.push(path);
+      router.push(finalPath);
     }
   };
 
   const confirmNavigation = () => {
     setShowUnsavedDialog(false);
     if (pendingNavigation) {
-      router.push(pendingNavigation);
+      // Ensure locale is preserved in pending navigation
+      const finalPath =
+        pendingNavigation === '/dashboard/properties'
+          ? `/dashboard/properties?locale=${locale}`
+          : pendingNavigation;
+      router.push(finalPath);
     }
   };
 
@@ -304,7 +313,7 @@ export function PropertyNewEditForm({
       }
 
       setTimeout(() => {
-        router.push('/dashboard/properties');
+        router.push(`/dashboard/properties?locale=${locale}`);
       }, 1500);
     } catch (error) {
       console.error('Error saving property:', error);

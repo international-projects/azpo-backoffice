@@ -2,6 +2,7 @@
 
 import useSWR from 'swr';
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 import { Box, Container, CircularProgress } from '@mui/material';
 
@@ -14,7 +15,13 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'https://api.realesta
 const multiFetcher = (urls) => Promise.all(urls.map((url) => fetch(url).then((res) => res.json())));
 
 export default function PropertyCreatePage() {
-  const [locale, setLocale] = useState('en');
+  const searchParams = useSearchParams();
+
+  // Get locale from URL query parameter, default to 'en'
+  const urlLocale = searchParams.get('locale');
+  const [locale, setLocale] = useState(
+    urlLocale && ['en', 'ru'].includes(urlLocale) ? urlLocale : 'en'
+  );
   const urls = [
     `${API_BASE_URL}/dashboard/properties/features/${locale}`,
     `${API_BASE_URL}/real-estates/locations/${locale}`,

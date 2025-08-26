@@ -2,7 +2,7 @@
 
 import useSWR from 'swr';
 import { useMemo, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 
 import { Box, Container, CircularProgress } from '@mui/material';
 
@@ -17,7 +17,13 @@ const multiFetcher = (urls) => Promise.all(urls.map((url) => fetch(url).then((re
 
 export default function PropertyEditPage() {
   const { id } = useParams();
-  const [locale, setLocale] = useState('en');
+  const searchParams = useSearchParams();
+
+  // Get locale from URL query parameter, default to 'en'
+  const urlLocale = searchParams.get('locale');
+  const [locale, setLocale] = useState(
+    urlLocale && ['en', 'ru'].includes(urlLocale) ? urlLocale : 'en'
+  );
 
   // Fetch property details and options in parallel
   const urls = [

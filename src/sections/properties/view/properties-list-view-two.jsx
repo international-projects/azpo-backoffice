@@ -144,7 +144,12 @@ function useProperties(locale = 'en') {
 export function PropertiesListViewTwo() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [locale, setLocale] = useState('en');
+
+  // Get locale from URL query parameter, default to 'en'
+  const urlLocale = searchParams.get('locale');
+  const [locale, setLocale] = useState(
+    urlLocale && ['en', 'ru'].includes(urlLocale) ? urlLocale : 'en'
+  );
   const { properties, count, isLoading, isError, mutate } = useProperties(locale);
 
   const [searchId, setSearchId] = useState(searchParams.get('propId') || '');
@@ -165,20 +170,22 @@ export function PropertiesListViewTwo() {
       current.delete('propId');
     }
     current.set('page', '1');
+    current.set('locale', locale); // Preserve locale in URL
     router.push(`/dashboard/properties?${current.toString()}`);
   };
 
   const handlePaginationChange = (event, value) => {
     const current = new URLSearchParams(Array.from(searchParams.entries()));
     current.set('page', value.toString());
+    current.set('locale', locale); // Preserve locale in URL
     router.push(`/dashboard/properties?${current.toString()}`);
   };
 
   const handleEdit = useCallback(
     (id) => {
-      router.push(`/dashboard/properties/edit/${id}`);
+      router.push(`/dashboard/properties/edit/${id}?locale=${locale}`);
     },
-    [router]
+    [router, locale]
   );
 
   const openDeleteDialog = (id) => {
@@ -218,7 +225,7 @@ export function PropertiesListViewTwo() {
         <Button
           variant="contained"
           startIcon={<Icon icon="mdi:plus" />}
-          onClick={() => router.push('/dashboard/properties/new')}
+          onClick={() => router.push(`/dashboard/properties/new?locale=${locale}`)}
         >
           Add Property
         </Button>
