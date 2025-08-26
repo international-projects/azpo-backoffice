@@ -1,7 +1,7 @@
 'use client';
 
 import useSWR from 'swr';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 
 import { Box, Container, CircularProgress } from '@mui/material';
@@ -9,7 +9,7 @@ import { Box, Container, CircularProgress } from '@mui/material';
 import { PropertyNewEditForm } from 'src/sections/properties/property-new-edit-form';
 
 // API Configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'https://api.realestate.com/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_SERVER_URL;
 
 // SWR Fetcher
 const fetcher = (url) => fetch(url).then((res) => res.json());
@@ -17,7 +17,7 @@ const multiFetcher = (urls) => Promise.all(urls.map((url) => fetch(url).then((re
 
 export default function PropertyEditPage() {
   const { id } = useParams();
-  const locale = 'en';
+  const [locale, setLocale] = useState('en');
 
   // Fetch property details and options in parallel
   const urls = [
@@ -31,7 +31,7 @@ export default function PropertyEditPage() {
     `${API_BASE_URL}/dashboard/properties/house-types`,
   ];
 
-  const { data, error } = useSWR(urls, multiFetcher);
+  const { data, error } = useSWR([urls, locale], ([apiUrls]) => multiFetcher(apiUrls));
 
   const isLoading = !error && !data;
 
@@ -70,5 +70,12 @@ export default function PropertyEditPage() {
     );
   }
 
-  return <PropertyNewEditForm currentProperty={propertyDetails} options={options} />;
+  return (
+    <PropertyNewEditForm
+      currentProperty={propertyDetails}
+      options={options}
+      locale={locale}
+      onLocaleChange={setLocale}
+    />
+  );
 }

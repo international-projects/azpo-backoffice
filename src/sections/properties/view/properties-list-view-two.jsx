@@ -32,7 +32,6 @@
 
 // SWR for Data Fetching
 import useSWR from 'swr';
-import PropTypes from 'prop-types';
 // Iconify for Icons
 import { Icon } from '@iconify/react';
 // Core Imports
@@ -57,6 +56,8 @@ import {
   CircularProgress,
   DialogContentText,
 } from '@mui/material';
+
+import { LocaleSelector } from 'src/components/locale-selector';
 
 import { STORAGE_KEY } from 'src/auth/context/jwt';
 
@@ -103,14 +104,6 @@ function CustomPopover({ open, anchorEl, onClose, children, sx, ...other }) {
   );
 }
 
-CustomPopover.propTypes = {
-  open: PropTypes.bool,
-  anchorEl: PropTypes.object,
-  onClose: PropTypes.func,
-  children: PropTypes.node,
-  sx: PropTypes.object,
-};
-
 // ================================================================================================
 // 2. SWR DATA FETCHER & HOOK
 // ================================================================================================
@@ -122,7 +115,7 @@ const fetcher = (url) =>
     return res.json();
   });
 
-function useProperties() {
+function useProperties(locale = 'en') {
   const searchParams = useSearchParams();
   const page = searchParams.get('page') || '1';
   const propId = searchParams.get('propId');
@@ -132,9 +125,9 @@ function useProperties() {
     query.set('propertyId', propId);
   }
 
-  const url = `${API_BASE_URL}/dashboard/properties/en?${query.toString()}`;
+  const url = `${API_BASE_URL}/dashboard/properties/${locale}?${query.toString()}`;
 
-  const { data, error, isLoading, mutate } = useSWR(url, fetcher);
+  const { data, error, isLoading, mutate } = useSWR([url, locale], ([apiUrl]) => fetcher(apiUrl));
 
   return {
     properties: data?.properties,
@@ -151,7 +144,8 @@ function useProperties() {
 export function PropertiesListViewTwo() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { properties, count, isLoading, isError, mutate } = useProperties();
+  const [locale, setLocale] = useState('en');
+  const { properties, count, isLoading, isError, mutate } = useProperties(locale);
 
   const [searchId, setSearchId] = useState(searchParams.get('propId') || '');
   const [dialogState, setDialogState] = useState({ open: false, propId: null });
@@ -198,7 +192,7 @@ export function PropertiesListViewTwo() {
   const handleDeleteProperty = async () => {
     if (!dialogState.propId) return;
     try {
-      await fetch(`${API_BASE_URL}/dashboard/property/delete/${dialogState.propId}`, {
+      await fetch(`${API_BASE_URL}/dashboard/property/delete/${dialogState.propId}/${locale}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${sessionStorage.getItem(STORAGE_KEY)}`,
@@ -228,7 +222,8 @@ export function PropertiesListViewTwo() {
         >
           Add Property
         </Button>
-        <Box display="flex" alignItems="center" gap={1}>
+        <Box display="flex" alignItems="center" gap={2}>
+          <LocaleSelector value={locale} onChange={setLocale} sx={{ minWidth: 150 }} />
           <TextField
             size="small"
             variant="outlined"
@@ -318,9 +313,3 @@ function DeleteConfirmationDialog({ open, onClose, onConfirm }) {
     </Dialog>
   );
 }
-
-DeleteConfirmationDialog.propTypes = {
-  open: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired,
-  onConfirm: PropTypes.func.isRequired,
-};

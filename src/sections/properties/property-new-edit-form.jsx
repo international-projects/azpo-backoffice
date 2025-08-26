@@ -23,6 +23,9 @@ import {
 
 import axiosInstance from 'src/utils/axios';
 
+// Custom Components
+import { LocaleSelector } from 'src/components/locale-selector';
+
 import { STORAGE_KEY } from 'src/auth/context/jwt';
 
 import { PropertyNewEditMedia } from './property-new-edit-media';
@@ -84,16 +87,22 @@ const PropertySchema = z.object({
   houseTypesArr: z.union([z.array(z.number()), z.number()]).optional(),
 });
 
-export function PropertyNewEditForm({ currentProperty, options }) {
+export function PropertyNewEditForm({
+  currentProperty,
+  options,
+  locale: initialLocale = 'en',
+  onLocaleChange,
+}) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState(null);
+  const [locale, setLocale] = useState(initialLocale);
 
   // SWR key for properties list
-  const propertiesKey = `${API_BASE_URL}/dashboard/create/en`;
+  const propertiesKey = `${API_BASE_URL}/dashboard/create/${locale}`;
 
   // Reset form state when switching between create/edit modes
   useEffect(() => {
@@ -265,8 +274,8 @@ export function PropertyNewEditForm({ currentProperty, options }) {
       // Determine if this is a create or update operation
       const isEdit = !!currentProperty;
       const url = isEdit
-        ? `${API_BASE_URL}/dashboard/update/${currentProperty.id}/en`
-        : `${API_BASE_URL}/dashboard/create/en`;
+        ? `${API_BASE_URL}/dashboard/update/${currentProperty.id}/${locale}`
+        : `${API_BASE_URL}/dashboard/create/${locale}`;
 
       const token = sessionStorage.getItem(STORAGE_KEY);
 
@@ -327,16 +336,26 @@ export function PropertyNewEditForm({ currentProperty, options }) {
         <form onSubmit={onSubmit}>
           <Grid container spacing={3}>
             <Grid item xs={12}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={isMultiValue}
-                    onChange={(e) => setValue('isMulti', e.target.checked ? 1 : 0)}
-                    disabled={!!currentProperty}
-                  />
-                }
-                label="Is this a project (multiple units)?"
-              />
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 2 }}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={isMultiValue}
+                      onChange={(e) => setValue('isMulti', e.target.checked ? 1 : 0)}
+                      disabled={!!currentProperty}
+                    />
+                  }
+                  label="Is this a project (multiple units)?"
+                />
+                <LocaleSelector
+                  value={locale}
+                  onChange={(newLocale) => {
+                    setLocale(newLocale);
+                    onLocaleChange?.(newLocale);
+                  }}
+                  sx={{ minWidth: 150 }}
+                />
+              </Box>
             </Grid>
             <Grid item xs={12} md={8}>
               <PropertyNewEditDetails

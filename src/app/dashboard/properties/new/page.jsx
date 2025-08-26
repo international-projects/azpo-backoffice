@@ -1,7 +1,7 @@
 'use client';
 
 import useSWR from 'swr';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { Box, Container, CircularProgress } from '@mui/material';
 
@@ -14,7 +14,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'https://api.realesta
 const multiFetcher = (urls) => Promise.all(urls.map((url) => fetch(url).then((res) => res.json())));
 
 export default function PropertyCreatePage() {
-  const locale = 'en';
+  const [locale, setLocale] = useState('en');
   const urls = [
     `${API_BASE_URL}/dashboard/properties/features/${locale}`,
     `${API_BASE_URL}/real-estates/locations/${locale}`,
@@ -25,7 +25,7 @@ export default function PropertyCreatePage() {
     `${API_BASE_URL}/dashboard/properties/house-types`,
   ];
 
-  const { data, error } = useSWR(urls, multiFetcher);
+  const { data, error } = useSWR([urls, locale], ([apiUrls]) => multiFetcher(apiUrls));
 
   const isLoading = !error && !data;
 
@@ -63,5 +63,5 @@ export default function PropertyCreatePage() {
     );
   }
 
-  return <PropertyNewEditForm options={options} />;
+  return <PropertyNewEditForm options={options} locale={locale} onLocaleChange={setLocale} />;
 }
