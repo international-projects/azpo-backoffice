@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 
 import axios from 'src/utils/axios';
 
@@ -64,7 +64,7 @@ export const useFetchAPI = (endpoint, options = {}) => {
         setLoading(false);
       }
     },
-    [endpoint]
+    [endpoint, page, limit, sort, order, filter]
   );
 
   return {

@@ -13,6 +13,10 @@ const cacheRtl = createCache({
 
 export function RTL({ children, direction }) {
   useEffect(() => {
+    // Check if we're in the browser environment
+    if (typeof document === 'undefined') {
+      return;
+    }
     document.dir = direction;
   }, [direction]);
 

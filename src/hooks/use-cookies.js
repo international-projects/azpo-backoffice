@@ -72,6 +72,11 @@ export function useCookies(key, initialState, defaultValues, options) {
 // ----------------------------------------------------------------------
 
 function getStorage(key) {
+  // Check if we're in the browser environment
+  if (typeof document === 'undefined') {
+    return null;
+  }
+
   try {
     const keyName = `${key}=`;
 
@@ -98,6 +103,11 @@ function getStorage(key) {
 // ----------------------------------------------------------------------
 
 function setStorage(key, value, daysUntilExpiration = 0) {
+  // Check if we're in the browser environment
+  if (typeof document === 'undefined') {
+    return;
+  }
+
   try {
     const serializedValue = encodeURIComponent(JSON.stringify(value));
     let cookieOptions = `${key}=${serializedValue}; path=/`;
@@ -116,6 +126,11 @@ function setStorage(key, value, daysUntilExpiration = 0) {
 // ----------------------------------------------------------------------
 
 function removeStorage(key) {
+  // Check if we're in the browser environment
+  if (typeof document === 'undefined') {
+    return;
+  }
+
   try {
     document.cookie = `${key}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
   } catch (error) {

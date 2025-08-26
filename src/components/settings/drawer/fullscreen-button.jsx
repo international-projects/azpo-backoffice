@@ -15,6 +15,11 @@ export function FullScreenButton() {
   const [fullscreen, setFullscreen] = useState(false);
 
   const onToggleFullScreen = useCallback(() => {
+    // Check if we're in the browser environment
+    if (typeof document === 'undefined') {
+      return;
+    }
+
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen();
       setFullscreen(true);

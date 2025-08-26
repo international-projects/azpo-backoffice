@@ -199,7 +199,7 @@ export function PropertiesListViewTwo() {
   const handleDeleteProperty = async () => {
     if (!dialogState.propId) return;
     try {
-      await fetch(`${API_BASE_URL}/dashboard/property/delete/${dialogState.propId}/${locale}`, {
+      await fetch(`${API_BASE_URL}/dashboard/property/delete/${dialogState.propId}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${sessionStorage.getItem(STORAGE_KEY)}`,

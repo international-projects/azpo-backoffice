@@ -1,5 +1,7 @@
 'use client';
 
+import dynamic from 'next/dynamic';
+
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Badge from '@mui/material/Badge';
@@ -22,7 +24,14 @@ import { FontOptions } from './font-options';
 import { useSettingsContext } from '../context';
 import { PresetsOptions } from './presets-options';
 import { defaultSettings } from '../config-settings';
-import { FullScreenButton } from './fullscreen-button';
+
+// Dynamically import FullScreenButton to avoid SSR issues
+const FullScreenButton = dynamic(
+  () => import('./fullscreen-button').then((mod) => ({ default: mod.FullScreenButton })),
+  {
+    ssr: false,
+  }
+);
 
 // ----------------------------------------------------------------------
 

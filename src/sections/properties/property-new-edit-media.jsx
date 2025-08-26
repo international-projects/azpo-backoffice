@@ -10,6 +10,7 @@ import {
   Card,
   List,
   Stack,
+  Button,
   Dialog,
   ListItem,
   Typography,
@@ -146,19 +147,26 @@ export function PropertyNewEditMedia() {
                       </IconButton>
                     }
                   >
-                    <img
-                      src={getImageUrl(file)}
-                      alt={file.name || file.file_name}
-                      width={50}
-                      height={50}
-                      style={{
-                        marginRight: '16px',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        objectFit: 'cover',
-                      }}
+                    <Button
                       onClick={() => setPreviewImage(getImageUrl(file))}
-                    />
+                      sx={{
+                        p: 0,
+                        minWidth: 'auto',
+                        borderRadius: '4px',
+                        mr: 2,
+                      }}
+                    >
+                      <img
+                        src={getImageUrl(file)}
+                        alt={file.name || file.file_name}
+                        width={50}
+                        height={50}
+                        style={{
+                          borderRadius: '4px',
+                          objectFit: 'cover',
+                        }}
+                      />
+                    </Button>
                     <ListItemText primary={file.name || file.file_name} />
                   </ListItem>
                 ))}

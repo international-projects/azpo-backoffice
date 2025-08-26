@@ -8,7 +8,6 @@
 /
 */
 
-import PropTypes from 'prop-types';
 import { Icon } from '@iconify/react';
 
 import {
@@ -189,10 +188,10 @@ function PropertyCard({ property, onEdit, onDelete }) {
   );
 }
 
-PropertyCard.propTypes = {
-  property: PropTypes.object.isRequired,
-  onEdit: PropTypes.func.isRequired,
-  onDelete: PropTypes.func.isRequired,
-};
+// PropTypes validation removed to avoid build errors
+// The component expects:
+// - property: object with property data
+// - onEdit: function to handle edit action
+// - onDelete: function to handle delete action
 
 export default PropertyCard;

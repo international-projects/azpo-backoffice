@@ -11,6 +11,11 @@ import { useRouter, usePathname, useSearchParams } from 'src/routes/hooks';
 
 export function ProgressBar() {
   useEffect(() => {
+    // Check if we're in the browser environment
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      return;
+    }
+
     NProgress.configure({ showSpinner: false });
 
     const handleAnchorClick = (event) => {
